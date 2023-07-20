@@ -33,7 +33,8 @@
   "license": "MIT",
   "dependencies": {
     "chalk": "^5.2.0",
-    "commander": "^10.0.1"
+    "commander": "^10.0.1",
+    "stripe": "^12.13.0"
   },
   "devDependencies": {
     "@beskar-labs/harmony": "^2.2.8",

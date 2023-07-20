@@ -1,8 +1,6 @@
 import { program } from 'commander';
-import chalk from 'chalk';
 import pkg from '../package.json';
-
-const { log } = console;
+import { migrate } from './lib/migrate';
 
 program
   .name('stripe-migrate')
@@ -14,8 +12,6 @@ program
   .description('y')
   .argument('<command>', 'command to generate')
   .option('--z <z>', 'z desc', 'default')
-  .action(async (code: string, options: { language: string }) => {
-    log(chalk.red('test'));
-  });
+  .action(migrate);
 
 program.parse();
