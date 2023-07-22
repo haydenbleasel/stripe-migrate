@@ -23,37 +23,40 @@ export const migrateProducts = async (oldStripe: Stripe, newStripe: Stripe) => {
     }
   }
 
-  const promises = oldProducts.map(async (product) => {
-    const tax_code =
-      typeof product.tax_code === 'string'
-        ? product.tax_code
-        : product.tax_code?.id;
+  const promises = oldProducts
+    // Only migrate active products
+    .filter((product) => product.active)
+    .map(async (product) => {
+      const tax_code =
+        typeof product.tax_code === 'string'
+          ? product.tax_code
+          : product.tax_code?.id;
 
-    const newProduct = await newStripe.products.create({
-      active: product.active,
-      attributes: product.attributes ?? undefined,
-      caption: product.caption ?? undefined,
-      deactivate_on: product.deactivate_on,
-      default_price_data: undefined,
-      description: product.description ?? undefined,
-      expand: undefined,
-      id: product.id,
-      images: product.images,
-      metadata: product.metadata,
-      name: product.name,
-      package_dimensions: product.package_dimensions ?? undefined,
-      shippable: product.shippable ?? undefined,
-      statement_descriptor: product.statement_descriptor ?? undefined,
-      tax_code,
-      type: product.type,
-      unit_label: product.unit_label ?? undefined,
-      url: product.url ?? undefined,
+      const newProduct = await newStripe.products.create({
+        active: product.active,
+        attributes: product.attributes ?? undefined,
+        caption: product.caption ?? undefined,
+        deactivate_on: product.deactivate_on,
+        default_price_data: undefined,
+        description: product.description ?? undefined,
+        expand: undefined,
+        id: product.id,
+        images: product.images,
+        metadata: product.metadata,
+        name: product.name,
+        package_dimensions: product.package_dimensions ?? undefined,
+        shippable: product.shippable ?? undefined,
+        statement_descriptor: product.statement_descriptor ?? undefined,
+        tax_code,
+        type: product.type,
+        unit_label: product.unit_label ?? undefined,
+        url: product.url ?? undefined,
+      });
+
+      console.log(`Created new product ${newProduct.name} (${newProduct.id})`);
+
+      return newProduct;
     });
-
-    console.log(`Created new coupon ${newProduct.name} (${newProduct.id})`);
-
-    return newProduct;
-  });
 
   return Promise.all(promises);
 };
