@@ -41,7 +41,7 @@ program
       console.log(chalk.green('Migrating coupons...'));
       await migrateCoupons(oldStripe, newStripe);
 
-      console.log(chalk.green('Migrating customers...'));
+      console.log(chalk.green('Migrating subscriptions...'));
       await migrateSubscriptions(oldStripe, newStripe);
 
       console.log(chalk.green('Migrating webhooks...'));

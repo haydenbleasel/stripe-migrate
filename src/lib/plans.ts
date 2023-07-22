@@ -58,6 +58,6 @@ export const migratePlans = async (oldStripe: Stripe, newStripe: Stripe) => {
       usage_type: plan.usage_type,
     });
 
-    console.log(`Created new plan ${newPlan.nickname} (${newPlan.id})`);
+    console.log(`Created new plan for ${newPlan.product} (${newPlan.id})`);
   });
 };
