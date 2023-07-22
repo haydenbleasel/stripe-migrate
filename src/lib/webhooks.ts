@@ -25,7 +25,10 @@ export const migrateWebhooks = async (oldStripe: Stripe, newStripe: Stripe) => {
 
   oldWebhooks.forEach(async (webhook) => {
     const newWebhook = await newStripe.webhookEndpoints.create({
-      ...webhook,
+      url: webhook.url,
+      connect: undefined,
+      expand: undefined,
+      metadata: webhook.metadata,
       enabled_events: webhook.enabled_events.map(
         (event) => event
       ) as Stripe.WebhookEndpointCreateParams['enabled_events'],

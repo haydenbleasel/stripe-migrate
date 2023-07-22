@@ -25,11 +25,16 @@ export const migrateCoupons = async (oldStripe: Stripe, newStripe: Stripe) => {
 
   oldCoupons.forEach(async (coupon) => {
     const newcoupon = await newStripe.coupons.create({
-      ...coupon,
       amount_off: coupon.amount_off ?? undefined,
+      applies_to: coupon.applies_to,
+      currency_options: coupon.currency_options,
       currency: coupon.currency ?? undefined,
       duration_in_months: coupon.duration_in_months ?? undefined,
+      duration: coupon.duration,
+      expand: undefined,
+      id: coupon.id,
       max_redemptions: coupon.max_redemptions ?? undefined,
+      metadata: coupon.metadata,
       name: coupon.name ?? undefined,
       percent_off: coupon.percent_off ?? undefined,
       redeem_by: coupon.redeem_by ?? undefined,
