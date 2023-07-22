@@ -17,10 +17,6 @@ stripe-migrate --from sk_test_123 --to sk_test_456
 
 Once your account has been migrated, simply update your API keys and redeploy your app.
 
-## TODO
-
-- force the billing period of subscriptions on the new account by setting a custom trial end date when you create them.
-
 ## Limitations
 
 - This tool does not migrate anything not mentioned above.
