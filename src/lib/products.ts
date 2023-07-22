@@ -1,8 +1,8 @@
 import chalk from 'chalk';
 import Stripe from 'stripe';
 
-export const migrateProducts = async (oldStripe: Stripe, newStripe: Stripe) => {
-  const oldProducts = [];
+const fetchProducts = async (stripe: Stripe) => {
+  const products = [];
 
   let startingAfter: Stripe.Product['id'] = '';
   let hasMoreProducts: boolean = true;
@@ -14,15 +14,21 @@ export const migrateProducts = async (oldStripe: Stripe, newStripe: Stripe) => {
       listParams.starting_after = startingAfter;
     }
 
-    const response = await oldStripe.products.list(listParams);
+    const response = await stripe.products.list(listParams);
 
     if (response.data.length > 0) {
-      oldProducts.push(...response.data);
+      products.push(...response.data);
       startingAfter = response.data[response.data.length - 1].id;
     } else {
       hasMoreProducts = false;
     }
   }
+
+  return products;
+};
+
+export const migrateProducts = async (oldStripe: Stripe, newStripe: Stripe) => {
+  const oldProducts = await fetchProducts(oldStripe);
 
   const promises = oldProducts
     // Only migrate active products

@@ -1,8 +1,8 @@
 import chalk from 'chalk';
 import Stripe from 'stripe';
 
-export const migratePlans = async (oldStripe: Stripe, newStripe: Stripe) => {
-  const oldPlans = [];
+const fetchPlans = async (stripe: Stripe) => {
+  const plans = [];
 
   let startingAfter: Stripe.Plan['id'] = '';
   let hasMorePlans: boolean = true;
@@ -14,15 +14,21 @@ export const migratePlans = async (oldStripe: Stripe, newStripe: Stripe) => {
       listParams.starting_after = startingAfter;
     }
 
-    const response = await oldStripe.plans.list(listParams);
+    const response = await stripe.plans.list(listParams);
 
     if (response.data.length > 0) {
-      oldPlans.push(...response.data);
+      plans.push(...response.data);
       startingAfter = response.data[response.data.length - 1].id;
     } else {
       hasMorePlans = false;
     }
   }
+
+  return plans;
+};
+
+export const migratePlans = async (oldStripe: Stripe, newStripe: Stripe) => {
+  const oldPlans = await fetchPlans(oldStripe);
 
   const promises = oldPlans
 

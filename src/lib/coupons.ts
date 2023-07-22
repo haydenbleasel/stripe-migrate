@@ -1,8 +1,34 @@
 import chalk from 'chalk';
 import Stripe from 'stripe';
 
+const fetchCoupons = async (stripe: Stripe) => {
+  const coupons = [];
+
+  let startingAfter: Stripe.Coupon['id'] = '';
+  let hasMoreCoupons: boolean = true;
+
+  while (hasMoreCoupons) {
+    const listParams: Stripe.CouponListParams = { limit: 100 };
+
+    if (startingAfter) {
+      listParams.starting_after = startingAfter;
+    }
+
+    const response = await stripe.coupons.list(listParams);
+
+    if (response.data.length > 0) {
+      coupons.push(...response.data);
+      startingAfter = response.data[response.data.length - 1].id;
+    } else {
+      hasMoreCoupons = false;
+    }
+  }
+
+  return coupons;
+};
+
 export const migrateCoupons = async (oldStripe: Stripe, newStripe: Stripe) => {
-  const oldCoupons = [];
+  const oldCoupons = await fetchCoupons(oldStripe);
 
   let startingAfter: Stripe.Coupon['id'] = '';
   let hasMoreCoupons: boolean = true;
