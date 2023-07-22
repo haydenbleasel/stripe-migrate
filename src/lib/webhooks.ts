@@ -32,8 +32,9 @@ export const migrateWebhooks = async (oldStripe: Stripe, newStripe: Stripe) => {
       enabled_events: webhook.enabled_events.map(
         (event) => event
       ) as Stripe.WebhookEndpointCreateParams['enabled_events'],
-      api_version:
-        webhook.api_version as Stripe.WebhookEndpointCreateParams['api_version'],
+      api_version: webhook.api_version
+        ? (webhook.api_version as Stripe.WebhookEndpointCreateParams['api_version'])
+        : undefined,
       description: webhook.description ?? undefined,
     });
 

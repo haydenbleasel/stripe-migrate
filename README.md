@@ -19,6 +19,7 @@ Once your account has been migrated, simply update your API keys and redeploy yo
 ## Limitations
 
 - This tool does not migrate anything not mentioned above.
+- This is currently a "single-run" tool, though it can be modified to run multiple times by checking for existing data and updating it instead of creating it.
 
 ## Notes
 

@@ -41,11 +41,11 @@ program
       console.log(chalk.green('Migrating coupons...'));
       await migrateCoupons(oldStripe, newStripe);
 
-      console.log(chalk.green('Migrating subscriptions...'));
-      await migrateSubscriptions(oldStripe, newStripe);
-
       console.log(chalk.green('Migrating webhooks...'));
       await migrateWebhooks(oldStripe, newStripe);
+
+      console.log(chalk.green('Migrating subscriptions...'));
+      await migrateSubscriptions(oldStripe, newStripe);
     } catch (error) {
       const message = error instanceof Error ? error.message : `${error}`;
 
