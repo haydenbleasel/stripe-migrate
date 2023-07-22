@@ -96,10 +96,15 @@ program
   .command('subscriptions')
   .option('--from <from>', 'Stripe secret key from the old account', undefined)
   .option('--to <to>', 'Stripe secret key from the new account', undefined)
-  .action(async ({ from, to }) => {
+  .option(
+    '--customerIds <customerIds>',
+    'Only migrate customers with these Customer IDs (comma separated)',
+    []
+  )
+  .action(async ({ from, to, customerIds }) => {
     try {
       const { oldStripe, newStripe } = createStripeInstances(from, to);
-      await migrateSubscriptions(oldStripe, newStripe);
+      await migrateSubscriptions(oldStripe, newStripe, customerIds);
     } catch (error) {
       handleError(error);
     }

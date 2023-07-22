@@ -30,7 +30,8 @@ export const fetchSubscriptions = async (stripe: Stripe) => {
 
 export const migrateSubscriptions = async (
   oldStripe: Stripe,
-  newStripe: Stripe
+  newStripe: Stripe,
+  customerIds: string[]
 ) => {
   const oldSubscriptions = await fetchSubscriptions(oldStripe);
 
