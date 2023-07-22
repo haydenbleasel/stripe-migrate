@@ -7,6 +7,7 @@ import { migrateSubscriptions } from './lib/subscriptions';
 import Stripe from 'stripe';
 import { migrateWebhooks } from './lib/webhooks';
 import { migrateProducts } from './lib/products';
+import { migrateCustomers } from './lib/customers';
 
 program
   .name('stripe-migrate')
@@ -14,7 +15,12 @@ program
   .version(pkg.version)
   .option('--from <from>', 'Stripe secret key from the old account', undefined)
   .option('--to <to>', 'Stripe secret key from the new account', undefined)
-  .action(async ({ from, to }) => {
+  .option(
+    '--mock',
+    'Mock customers in the new account and use email matching instead of Customer IDs',
+    false
+  )
+  .action(async ({ from, to, mock }) => {
     console.log(chalk.green('Validating Stripe keys...'));
     if (!from) {
       console.log(chalk.red('<from> argument is required'));
@@ -32,6 +38,11 @@ program
     const newStripe = new Stripe(to, { apiVersion: '2022-11-15' });
 
     try {
+      if (mock) {
+        console.log(chalk.green('Migrating customers...'));
+        await migrateCustomers(oldStripe, newStripe);
+      }
+
       console.log(chalk.green('Migrating products...'));
       await migrateProducts(oldStripe, newStripe);
 
@@ -45,7 +56,7 @@ program
       await migrateWebhooks(oldStripe, newStripe);
 
       console.log(chalk.green('Migrating subscriptions...'));
-      await migrateSubscriptions(oldStripe, newStripe);
+      await migrateSubscriptions(oldStripe, newStripe, mock);
     } catch (error) {
       const message = error instanceof Error ? error.message : `${error}`;
 

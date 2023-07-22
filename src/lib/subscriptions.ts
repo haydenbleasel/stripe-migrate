@@ -1,10 +1,9 @@
 import Stripe from 'stripe';
+import { fetchCustomers } from './customers';
+import chalk from 'chalk';
 
-export const migrateSubscriptions = async (
-  oldStripe: Stripe,
-  newStripe: Stripe
-) => {
-  const oldSubscriptions = [];
+export const fetchSubscriptions = async (stripe: Stripe) => {
+  const subscriptions = [];
 
   let startingAfter: Stripe.Subscription['id'] = '';
   let hasMoreSubscriptions: boolean = true;
@@ -16,21 +15,64 @@ export const migrateSubscriptions = async (
       listParams.starting_after = startingAfter;
     }
 
-    const response = await oldStripe.subscriptions.list(listParams);
+    const response = await stripe.subscriptions.list(listParams);
 
     if (response.data.length > 0) {
-      oldSubscriptions.push(...response.data);
+      subscriptions.push(...response.data);
       startingAfter = response.data[response.data.length - 1].id;
     } else {
       hasMoreSubscriptions = false;
     }
   }
 
+  return subscriptions;
+};
+
+export const migrateSubscriptions = async (
+  oldStripe: Stripe,
+  newStripe: Stripe,
+  mock: boolean
+) => {
+  const oldSubscriptions = await fetchSubscriptions(oldStripe);
+  const newCustomers = mock ? await fetchCustomers(newStripe) : [];
+
   const promises = oldSubscriptions.map(async (subscription) => {
-    const customerId =
+    let customerId =
       typeof subscription.customer === 'string'
         ? subscription.customer
         : subscription.customer?.id;
+
+    // If we're in "mock" mode, we need to find the new customer ID
+    // based on the email address. If we can't find it, we skip the
+    // subscription altogether.
+    if (mock) {
+      const oldCustomer =
+        typeof subscription.customer === 'string'
+          ? await oldStripe.customers.retrieve(subscription.customer)
+          : subscription.customer;
+
+      if (oldCustomer.deleted) {
+        console.log(
+          chalk.blue(`Customer ${oldCustomer.id} has been deleted, skipping...`)
+        );
+        return;
+      }
+
+      const customer = newCustomers.find(
+        ({ email }) => email === oldCustomer.email
+      );
+
+      if (!customer) {
+        console.log(
+          chalk.blue(
+            `Could not find customer with email ${oldCustomer.email}, skipping...`
+          )
+        );
+        return;
+      }
+
+      customerId = customer.id;
+    }
 
     const billing_thresholds = subscription.billing_thresholds
       ? {
@@ -186,10 +228,11 @@ export const migrateSubscriptions = async (
         }
       : undefined;
 
-    // Setting the trial_end to the created date is a workaround
+    // Setting the trial_end to the current period end is important
     // for maintaining the same billing period:
     // https://support.stripe.com/questions/recreate-subscriptions-and-plans-after-moving-customer-data-to-a-new-stripe-account
-    const trial_end = subscription.trial_end ?? subscription.created;
+    const trial_end: number | 'now' | undefined =
+      subscription.current_period_end;
 
     const newSubscription = await newStripe.subscriptions.create({
       add_invoice_items: undefined,
