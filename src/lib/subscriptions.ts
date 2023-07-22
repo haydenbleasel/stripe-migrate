@@ -34,10 +34,20 @@ export const migrateSubscriptions = async (
       customer: customerId,
       application_fee_percent:
         subscription.application_fee_percent ?? undefined,
-      billing_thresholds: undefined, // TODO
+      billing_thresholds: subscription.billing_thresholds
+        ? {
+            amount_gte: subscription.billing_thresholds.amount_gte ?? undefined,
+            reset_billing_cycle_anchor:
+              subscription.billing_thresholds.reset_billing_cycle_anchor ??
+              undefined,
+          }
+        : undefined,
       cancel_at: subscription.cancel_at ?? undefined,
       days_until_due: subscription.days_until_due ?? undefined,
-      default_payment_method: undefined, // TODO
+      default_payment_method:
+        typeof subscription.default_payment_method === 'string'
+          ? subscription.default_payment_method
+          : subscription.default_payment_method?.id,
       default_source: undefined, // TODO
       default_tax_rates: undefined, // TODO
       description: subscription.description ?? undefined,
