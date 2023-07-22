@@ -7,60 +7,101 @@ import { migrateSubscriptions } from './lib/subscriptions';
 import Stripe from 'stripe';
 import { migrateWebhooks } from './lib/webhooks';
 import { migrateProducts } from './lib/products';
-import { migrateCustomers } from './lib/customers';
+
+const createStripeInstances = (
+  from?: string,
+  to?: string
+): {
+  oldStripe: Stripe;
+  newStripe: Stripe;
+} => {
+  if (!from) {
+    throw new Error('<from> argument is required');
+  }
+
+  if (!to) {
+    throw new Error('<to> argument is required');
+  }
+
+  const oldStripe = new Stripe(from, { apiVersion: '2022-11-15' });
+  const newStripe = new Stripe(to, { apiVersion: '2022-11-15' });
+
+  return { oldStripe, newStripe };
+};
+
+const handleError = (error: unknown): void => {
+  const message = error instanceof Error ? error.message : `${error}`;
+
+  console.log(chalk.red(message));
+};
 
 program
   .name('stripe-migrate')
   .description(pkg.description)
-  .version(pkg.version)
+  .version(pkg.version);
+
+program
+  .command('webhooks')
   .option('--from <from>', 'Stripe secret key from the old account', undefined)
   .option('--to <to>', 'Stripe secret key from the new account', undefined)
-  .option(
-    '--mock',
-    'Mock customers in the new account and use email matching instead of Customer IDs',
-    false
-  )
-  .action(async ({ from, to, mock }) => {
-    console.log(chalk.green('Validating Stripe keys...'));
-    if (!from) {
-      console.log(chalk.red('<from> argument is required'));
-      return;
-    }
-
-    if (!to) {
-      console.log(chalk.red('<to> argument is required'));
-      return;
-    }
-
-    console.log(chalk.green('Creating Stripe instances...'));
-
-    const oldStripe = new Stripe(from, { apiVersion: '2022-11-15' });
-    const newStripe = new Stripe(to, { apiVersion: '2022-11-15' });
-
+  .action(async ({ from, to }) => {
     try {
-      if (mock) {
-        console.log(chalk.green('Migrating customers...'));
-        await migrateCustomers(oldStripe, newStripe);
-      }
-
-      console.log(chalk.green('Migrating products...'));
-      await migrateProducts(oldStripe, newStripe);
-
-      console.log(chalk.green('Migrating plans...'));
-      await migratePlans(oldStripe, newStripe);
-
-      console.log(chalk.green('Migrating coupons...'));
-      await migrateCoupons(oldStripe, newStripe);
-
-      console.log(chalk.green('Migrating webhooks...'));
+      const { oldStripe, newStripe } = createStripeInstances(from, to);
       await migrateWebhooks(oldStripe, newStripe);
-
-      console.log(chalk.green('Migrating subscriptions...'));
-      await migrateSubscriptions(oldStripe, newStripe, mock);
     } catch (error) {
-      const message = error instanceof Error ? error.message : `${error}`;
+      handleError(error);
+    }
+  });
 
-      console.log(chalk.red(message));
+program
+  .command('products')
+  .option('--from <from>', 'Stripe secret key from the old account', undefined)
+  .option('--to <to>', 'Stripe secret key from the new account', undefined)
+  .action(async ({ from, to }) => {
+    try {
+      const { oldStripe, newStripe } = createStripeInstances(from, to);
+      await migrateProducts(oldStripe, newStripe);
+    } catch (error) {
+      handleError(error);
+    }
+  });
+
+program
+  .command('plans')
+  .option('--from <from>', 'Stripe secret key from the old account', undefined)
+  .option('--to <to>', 'Stripe secret key from the new account', undefined)
+  .action(async ({ from, to }) => {
+    try {
+      const { oldStripe, newStripe } = createStripeInstances(from, to);
+      await migratePlans(oldStripe, newStripe);
+    } catch (error) {
+      handleError(error);
+    }
+  });
+
+program
+  .command('coupons')
+  .option('--from <from>', 'Stripe secret key from the old account', undefined)
+  .option('--to <to>', 'Stripe secret key from the new account', undefined)
+  .action(async ({ from, to }) => {
+    try {
+      const { oldStripe, newStripe } = createStripeInstances(from, to);
+      await migrateCoupons(oldStripe, newStripe);
+    } catch (error) {
+      handleError(error);
+    }
+  });
+
+program
+  .command('subscriptions')
+  .option('--from <from>', 'Stripe secret key from the old account', undefined)
+  .option('--to <to>', 'Stripe secret key from the new account', undefined)
+  .action(async ({ from, to }) => {
+    try {
+      const { oldStripe, newStripe } = createStripeInstances(from, to);
+      await migrateSubscriptions(oldStripe, newStripe);
+    } catch (error) {
+      handleError(error);
     }
   });
 

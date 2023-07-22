@@ -11,7 +11,11 @@ Before using this CLI, ensure you use the Stripe CLI to copy PAN data across Str
 Next up, run this CLI to migrate the rest of your data. It will migrate your Products, Plans, Coupons, Subscriptions and Webhooks with maximum consistency.
 
 ```bash
-stripe-migrate --from sk_test_123 --to sk_test_456
+stripe-migrate webhooks --from sk_test_123 --to sk_test_456
+stripe-migrate products --from sk_test_123 --to sk_test_456
+stripe-migrate plans --from sk_test_123 --to sk_test_456
+stripe-migrate coupons --from sk_test_123 --to sk_test_456
+stripe-migrate subscriptions --from sk_test_123 --to sk_test_456
 ```
 
 Once your account has been migrated, simply update your API keys and redeploy your app.
