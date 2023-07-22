@@ -6,6 +6,7 @@ import { migrateCoupons } from './lib/coupons';
 import { migrateSubscriptions } from './lib/subscriptions';
 import Stripe from 'stripe';
 import { migrateWebhooks } from './lib/webhooks';
+import { migrateProducts } from './lib/products';
 
 program
   .name('stripe-migrate')
@@ -31,6 +32,9 @@ program
     const newStripe = new Stripe(to, { apiVersion: '2022-11-15' });
 
     try {
+      console.log(chalk.green('Migrating products...'));
+      await migrateProducts(oldStripe, newStripe);
+
       console.log(chalk.green('Migrating plans...'));
       await migratePlans(oldStripe, newStripe);
 
