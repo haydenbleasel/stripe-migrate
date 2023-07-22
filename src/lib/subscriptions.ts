@@ -1,6 +1,4 @@
 import Stripe from 'stripe';
-import { fetchCustomers } from './customers';
-import chalk from 'chalk';
 
 export const fetchSubscriptions = async (stripe: Stripe) => {
   const subscriptions = [];
@@ -39,6 +37,9 @@ export const migrateSubscriptions = async (
 
     // Only migrate active subscriptions
     .filter((subscription) => subscription.status === 'active')
+    .filter((subscription) => !subscription.cancel_at_period_end)
+    .filter((subscription) => !subscription.cancel_at)
+
     .map(async (subscription) => {
       const customerId =
         typeof subscription.customer === 'string'
@@ -208,7 +209,7 @@ export const migrateSubscriptions = async (
       // Setting the trial_end to the current period end is important
       // for maintaining the same billing period:
       // https://support.stripe.com/questions/recreate-subscriptions-and-plans-after-moving-customer-data-to-a-new-stripe-account
-      const billing_cycle_anchor: number | 'now' | undefined =
+      const trial_end: number | 'now' | undefined =
         subscription.current_period_end;
 
       const newSubscription = await newStripe.subscriptions.create({
@@ -216,7 +217,7 @@ export const migrateSubscriptions = async (
         application_fee_percent,
         automatic_tax,
         backdate_start_date: undefined,
-        billing_cycle_anchor,
+        billing_cycle_anchor: undefined,
         billing_thresholds,
         cancel_at_period_end: subscription.cancel_at_period_end,
         cancel_at: subscription.cancel_at ?? undefined,
@@ -241,7 +242,7 @@ export const migrateSubscriptions = async (
         promotion_code: undefined,
         proration_behavior: undefined,
         transfer_data,
-        trial_end: undefined,
+        trial_end,
         trial_from_plan: undefined,
         trial_period_days: undefined,
         trial_settings: subscription.trial_settings ?? undefined,
