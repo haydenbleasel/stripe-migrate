@@ -1,3 +1,4 @@
+import chalk from 'chalk';
 import Stripe from 'stripe';
 
 export const migratePlans = async (oldStripe: Stripe, newStripe: Stripe) => {
@@ -41,30 +42,44 @@ export const migratePlans = async (oldStripe: Stripe, newStripe: Stripe) => {
           }))
         : undefined;
 
-      const newPlan = await newStripe.plans.create({
-        active: plan.active,
-        aggregate_usage: plan.aggregate_usage ?? undefined,
-        amount_decimal: undefined, // Only one of `amount` or `amount_decimal` can be set
-        amount: plan.amount ?? undefined,
-        billing_scheme: plan.billing_scheme,
-        currency: plan.currency,
-        expand: undefined,
-        id: plan.id,
-        interval_count: plan.interval_count,
-        interval: plan.interval,
-        metadata: plan.metadata,
-        nickname: plan.nickname ?? undefined,
-        product: productId,
-        tiers_mode: plan.tiers_mode ?? undefined,
-        tiers,
-        transform_usage: plan.transform_usage ?? undefined,
-        trial_period_days: plan.trial_period_days ?? undefined,
-        usage_type: plan.usage_type,
-      });
+      try {
+        const newPlan = await newStripe.plans.create({
+          active: plan.active,
+          aggregate_usage: plan.aggregate_usage ?? undefined,
+          amount_decimal: undefined, // Only one of `amount` or `amount_decimal` can be set
+          amount: plan.amount ?? undefined,
+          billing_scheme: plan.billing_scheme,
+          currency: plan.currency,
+          expand: undefined,
+          id: plan.id,
+          interval_count: plan.interval_count,
+          interval: plan.interval,
+          metadata: plan.metadata,
+          nickname: plan.nickname ?? undefined,
+          product: productId,
+          tiers_mode: plan.tiers_mode ?? undefined,
+          tiers,
+          transform_usage: plan.transform_usage ?? undefined,
+          trial_period_days: plan.trial_period_days ?? undefined,
+          usage_type: plan.usage_type,
+        });
 
-      console.log(`Created new plan for ${newPlan.product} (${newPlan.id})`);
+        console.log(`Created new plan for ${newPlan.product} (${newPlan.id})`);
 
-      return newPlan;
+        return newPlan;
+      } catch (error) {
+        if (
+          error instanceof Error &&
+          error.message.includes('already exists')
+        ) {
+          console.log(
+            chalk.blue(`Plan ${plan.id} already exists, skipping...`)
+          );
+          return;
+        }
+
+        throw error;
+      }
     });
 
   return Promise.all(promises);
