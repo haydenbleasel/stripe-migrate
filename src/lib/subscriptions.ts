@@ -4,10 +4,26 @@ export const migrateSubscriptions = async (
   oldStripe: Stripe,
   newStripe: Stripe
 ) => {
-  // TODO: Rework this so it's paginated
-  const oldSubscriptions = await oldStripe.subscriptions.list({ limit: 100 });
+  const oldSubscriptions = [];
 
-  oldSubscriptions.data.forEach(async (subscription) => {
+  let startingAfter: Stripe.Subscription['id'] = '';
+  let hasMoreSubscriptions: boolean = true;
+
+  while (hasMoreSubscriptions) {
+    const response = await oldStripe.subscriptions.list({
+      limit: 100,
+      starting_after: startingAfter,
+    });
+
+    if (response.data.length > 0) {
+      oldSubscriptions.push(...response.data);
+      startingAfter = response.data[response.data.length - 1].id;
+    } else {
+      hasMoreSubscriptions = false;
+    }
+  }
+
+  oldSubscriptions.forEach(async (subscription) => {
     const customerId =
       typeof subscription.customer === 'string'
         ? subscription.customer

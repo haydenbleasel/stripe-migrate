@@ -1,10 +1,26 @@
 import Stripe from 'stripe';
 
 export const migratePlans = async (oldStripe: Stripe, newStripe: Stripe) => {
-  // TODO: Rework this so it's paginated
-  const oldPlans = await oldStripe.plans.list({ limit: 100 });
+  const oldPlans = [];
 
-  oldPlans.data.forEach(async (plan) => {
+  let startingAfter: Stripe.Plan['id'] = '';
+  let hasMorePlans: boolean = true;
+
+  while (hasMorePlans) {
+    const response = await oldStripe.plans.list({
+      limit: 100,
+      starting_after: startingAfter,
+    });
+
+    if (response.data.length > 0) {
+      oldPlans.push(...response.data);
+      startingAfter = response.data[response.data.length - 1].id;
+    } else {
+      hasMorePlans = false;
+    }
+  }
+
+  oldPlans.forEach(async (plan) => {
     const productId =
       typeof plan.product === 'string' ? plan.product : plan.product?.id;
 
