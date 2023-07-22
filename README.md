@@ -16,10 +16,11 @@ stripe-migrate --from sk_test_123 --to sk_test_456
 
 Once your account has been migrated, simply update your API keys and redeploy your app.
 
+This is a "mutli-run" CLI tool as it checks for existing matching data and skips it. This means you can run it multiple times to ensure everything is migrated.
+
 ## Limitations
 
 - This tool does not migrate anything not mentioned above.
-- This is currently a "single-run" tool, though it can be modified to run multiple times by checking for existing data and updating it instead of creating it.
 
 ## Notes
 
