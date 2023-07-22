@@ -10,10 +10,13 @@ export const migrateSubscriptions = async (
   let hasMoreSubscriptions: boolean = true;
 
   while (hasMoreSubscriptions) {
-    const response = await oldStripe.subscriptions.list({
-      limit: 100,
-      starting_after: startingAfter,
-    });
+    const listParams: Stripe.SubscriptionListParams = { limit: 100 };
+
+    if (startingAfter) {
+      listParams.starting_after = startingAfter;
+    }
+
+    const response = await oldStripe.subscriptions.list(listParams);
 
     if (response.data.length > 0) {
       oldSubscriptions.push(...response.data);

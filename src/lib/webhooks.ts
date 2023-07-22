@@ -7,10 +7,13 @@ export const migrateWebhooks = async (oldStripe: Stripe, newStripe: Stripe) => {
   let hasMoreWebhooks: boolean = true;
 
   while (hasMoreWebhooks) {
-    const response = await oldStripe.webhookEndpoints.list({
-      limit: 100,
-      starting_after: startingAfter,
-    });
+    const listParams: Stripe.WebhookEndpointListParams = { limit: 100 };
+
+    if (startingAfter) {
+      listParams.starting_after = startingAfter;
+    }
+
+    const response = await oldStripe.webhookEndpoints.list(listParams);
 
     if (response.data.length > 0) {
       oldWebhooks.push(...response.data);

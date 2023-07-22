@@ -7,10 +7,13 @@ export const migratePlans = async (oldStripe: Stripe, newStripe: Stripe) => {
   let hasMorePlans: boolean = true;
 
   while (hasMorePlans) {
-    const response = await oldStripe.plans.list({
-      limit: 100,
-      starting_after: startingAfter,
-    });
+    const listParams: Stripe.PlanListParams = { limit: 100 };
+
+    if (startingAfter) {
+      listParams.starting_after = startingAfter;
+    }
+
+    const response = await oldStripe.plans.list(listParams);
 
     if (response.data.length > 0) {
       oldPlans.push(...response.data);

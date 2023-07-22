@@ -7,10 +7,13 @@ export const migrateCoupons = async (oldStripe: Stripe, newStripe: Stripe) => {
   let hasMoreCoupons: boolean = true;
 
   while (hasMoreCoupons) {
-    const response = await oldStripe.coupons.list({
-      limit: 100,
-      starting_after: startingAfter,
-    });
+    const listParams: Stripe.CouponListParams = { limit: 100 };
+
+    if (startingAfter) {
+      listParams.starting_after = startingAfter;
+    }
+
+    const response = await oldStripe.coupons.list(listParams);
 
     if (response.data.length > 0) {
       oldCoupons.push(...response.data);
