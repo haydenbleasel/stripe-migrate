@@ -11,7 +11,6 @@ Before using this CLI, ensure you use the Stripe CLI to copy PAN data across Str
 Next up, run this CLI to migrate the rest of your data. It will migrate your Plans, Coupons, Subscriptions and Webhooks with maximum consistency.
 
 ```bash
-# TBD, but something like this:
 stripe-migrate --from sk_test_123 --to sk_test_456
 ```
 
