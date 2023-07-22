@@ -5,6 +5,7 @@ import { migratePlans } from './lib/plans';
 import { migrateCoupons } from './lib/coupons';
 import { migrateSubscriptions } from './lib/subscriptions';
 import Stripe from 'stripe';
+import { migrateWebhooks } from './lib/webhooks';
 
 program
   .name('stripe-migrate')
@@ -42,6 +43,9 @@ program
 
     console.log(chalk.green('Migrating customers...'));
     await migrateSubscriptions(oldStripe, newStripe);
+
+    console.log(chalk.green('Migrating webhooks...'));
+    await migrateWebhooks(oldStripe, newStripe);
   });
 
 program.parse();
