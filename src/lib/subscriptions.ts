@@ -177,7 +177,11 @@ export const migrateSubscriptions = async (
               subscription.transfer_data.amount_percent ?? undefined,
           }
         : undefined,
-      trial_end: subscription.trial_end ?? undefined,
+
+      // Setting the trial_end to the created date is a workaround
+      // for maintaining the same billing period:
+      // https://support.stripe.com/questions/recreate-subscriptions-and-plans-after-moving-customer-data-to-a-new-stripe-account
+      trial_end: subscription.trial_end ?? subscription.created,
       trial_settings: subscription.trial_settings ?? undefined,
     });
 
