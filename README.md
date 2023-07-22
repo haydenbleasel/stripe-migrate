@@ -20,3 +20,7 @@ Once your account has been migrated, simply update your API keys and redeploy yo
 ## Limitations
 
 - This tool does not migrate anything not mentioned above.
+
+## Notes
+
+I highly recommend testing this with a Test Mode account first as you can delete all test data and start again. Once you're happy with the results, you can run it against your Live Mode account.
