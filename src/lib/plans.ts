@@ -31,8 +31,16 @@ export const migratePlans = async (oldStripe: Stripe, newStripe: Stripe) => {
       amount_decimal: plan.amount_decimal ?? undefined,
       nickname: plan.nickname ?? undefined,
       product: productId,
-      tiers: [], // TODO
-      tiers_mode: undefined, // TODO
+      tiers: plan.tiers
+        ? plan.tiers.map((oldTier) => ({
+            up_to: oldTier.up_to ?? 'inf',
+            flat_amount: oldTier.flat_amount ?? undefined,
+            flat_amount_decimal: oldTier.flat_amount_decimal ?? undefined,
+            unit_amount: oldTier.unit_amount ?? undefined,
+            unit_amount_decimal: oldTier.unit_amount_decimal ?? undefined,
+          }))
+        : undefined,
+      tiers_mode: plan.tiers_mode ?? undefined,
       transform_usage: plan.transform_usage ?? undefined,
       trial_period_days: plan.trial_period_days ?? undefined,
     });
