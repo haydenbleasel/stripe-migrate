@@ -23,7 +23,7 @@ export const migratePlans = async (oldStripe: Stripe, newStripe: Stripe) => {
     }
   }
 
-  oldPlans.forEach(async (plan) => {
+  const promises = oldPlans.map(async (plan) => {
     const productId =
       typeof plan.product === 'string' ? plan.product : plan.product?.id;
 
@@ -59,5 +59,9 @@ export const migratePlans = async (oldStripe: Stripe, newStripe: Stripe) => {
     });
 
     console.log(`Created new plan for ${newPlan.product} (${newPlan.id})`);
+
+    return newPlan;
   });
+
+  return Promise.all(promises);
 };

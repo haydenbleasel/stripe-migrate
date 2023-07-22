@@ -23,7 +23,7 @@ export const migrateProducts = async (oldStripe: Stripe, newStripe: Stripe) => {
     }
   }
 
-  oldProducts.forEach(async (product) => {
+  const promises = oldProducts.map(async (product) => {
     const tax_code =
       typeof product.tax_code === 'string'
         ? product.tax_code
@@ -51,5 +51,9 @@ export const migrateProducts = async (oldStripe: Stripe, newStripe: Stripe) => {
     });
 
     console.log(`Created new coupon ${newProduct.name} (${newProduct.id})`);
+
+    return newProduct;
   });
+
+  return Promise.all(promises);
 };

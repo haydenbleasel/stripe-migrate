@@ -26,7 +26,7 @@ export const migrateSubscriptions = async (
     }
   }
 
-  oldSubscriptions.forEach(async (subscription) => {
+  const promises = oldSubscriptions.map(async (subscription) => {
     const customerId =
       typeof subscription.customer === 'string'
         ? subscription.customer
@@ -230,4 +230,6 @@ export const migrateSubscriptions = async (
       `Created new subscription ${newSubscription.id} for ${newSubscription.customer}`
     );
   });
+
+  return Promise.all(promises);
 };

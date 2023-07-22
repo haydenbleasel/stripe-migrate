@@ -23,7 +23,7 @@ export const migrateWebhooks = async (oldStripe: Stripe, newStripe: Stripe) => {
     }
   }
 
-  oldWebhooks.forEach(async (webhook) => {
+  const promises = oldWebhooks.map(async (webhook) => {
     const newWebhook = await newStripe.webhookEndpoints.create({
       url: webhook.url,
       connect: undefined,
@@ -38,5 +38,9 @@ export const migrateWebhooks = async (oldStripe: Stripe, newStripe: Stripe) => {
     });
 
     console.log(`Created new webhook ${newWebhook.id} (${newWebhook.url})`);
+
+    return newWebhook;
   });
+
+  return Promise.all(promises);
 };
