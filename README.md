@@ -8,7 +8,7 @@ A Node-based CLI tool to migrate content from between Stripe accounts. Implement
 
 Before using this CLI, ensure you use the Stripe CLI to copy PAN data across Stripe accounts. This copies Customers, Cards, Sources, Payment Methods and Bank Accounts, preserving the original Customer IDs. You can learn more about that [here](https://support.stripe.com/questions/copy-existing-account-data-to-a-new-stripe-account).
 
-Next up, run this CLI to migrate the rest of your data. It will migrate your Plans, Coupons, Subscriptions and Webhooks with maximum consistency.
+Next up, run this CLI to migrate the rest of your data. It will migrate your Products, Plans, Coupons, Subscriptions and Webhooks with maximum consistency.
 
 ```bash
 stripe-migrate --from sk_test_123 --to sk_test_456
