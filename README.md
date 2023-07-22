@@ -1,5 +1,7 @@
 # stripe-migrate
 
+# WIP! Don't use this yet... unless you're gonna contribute.
+
 A Node-based CLI tool to migrate content from between Stripe accounts.
 
 1. Copy PAN data across Stripe accounts in UI.
