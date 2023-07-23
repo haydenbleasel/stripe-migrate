@@ -28,10 +28,6 @@ Once your account has been migrated, simply update your API keys and redeploy yo
 
 This is a "mutli-run" CLI tool as it checks for existing matching data and skips it. This means you can run it multiple times to ensure everything is migrated.
 
-## Limitations
-
-- This tool does not migrate anything not mentioned above.
-
 ## Notes
 
-I highly recommend testing this with a Test Mode account first as you can delete all test data and start again. Once you're happy with the results, you can run it against your Live Mode account.
+I highly recommend testing this with a Test Mode account first as you can delete all test data and start again. Once you're happy with the results, you can run it against your Live Mode account. Also, this tool does not migrate anything not mentioned above.
