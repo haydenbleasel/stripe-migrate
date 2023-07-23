@@ -99,7 +99,7 @@ program
   .option(
     '--customerIds <customerIds>',
     'Only migrate customers with these Customer IDs (comma separated)',
-    []
+    ''
   )
   .option(
     '--dry-run',
@@ -109,7 +109,12 @@ program
   .action(async ({ from, to, customerIds, dryRun }) => {
     try {
       const { oldStripe, newStripe } = createStripeInstances(from, to);
-      await migrateSubscriptions(oldStripe, newStripe, customerIds, dryRun);
+      await migrateSubscriptions(
+        oldStripe,
+        newStripe,
+        customerIds.split(','),
+        dryRun
+      );
     } catch (error) {
       handleError(error);
     }

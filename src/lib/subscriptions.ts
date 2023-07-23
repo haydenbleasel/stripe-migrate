@@ -47,19 +47,27 @@ export const migrateSubscriptions = async (
   const mockCustomers: Stripe.Customer[] = [];
 
   if (dryRun) {
-    console.log(chalk.blue(`[Dry run] mocking customers...`));
-
-    const oldCustomers = (
-      await Promise.all(
-        oldSubscriptions.map(async (sub) =>
-          typeof sub.customer === 'string'
-            ? await oldStripe.customers.retrieve(sub.customer)
-            : sub.customer
-        )
+    console.log(
+      chalk.blue(
+        `[Dry run] mocking ${
+          customerIds.length ? `${customerIds.length} select` : '20 random'
+        } customers...`
       )
-    )
-      .filter((customer) => !customer.deleted)
-      .slice(0, 20) as Stripe.Customer[];
+    );
+
+    const oldCustomerPromises = customerIds.length
+      ? customerIds.map(async (id) => await oldStripe.customers.retrieve(id))
+      : oldSubscriptions
+          .map(async (sub) =>
+            typeof sub.customer === 'string'
+              ? await oldStripe.customers.retrieve(sub.customer)
+              : sub.customer
+          )
+          .slice(0, 20);
+
+    const oldCustomers = (await Promise.all(oldCustomerPromises)).filter(
+      (customer) => !customer.deleted
+    ) as Stripe.Customer[];
 
     const newCustomers = await Promise.all(
       oldCustomers.map(async (customer) => {
@@ -144,6 +152,8 @@ export const migrateSubscriptions = async (
         customerId = mockCustomer.id;
         default_payment_method = paymentMethod.data[0].id;
         automatic_tax = undefined;
+      } else if (customerIds.length && !customerIds.includes(customerId)) {
+        return;
       }
 
       const billing_thresholds = subscription.billing_thresholds
@@ -313,7 +323,7 @@ export const migrateSubscriptions = async (
         cancel_at_period_end: subscription.cancel_at_period_end,
         cancel_at: subscription.cancel_at ?? undefined,
         collection_method: subscription.collection_method,
-        coupon: undefined,
+        coupon: subscription.discount?.coupon.id ?? undefined,
         currency: subscription.currency,
         customer: customerId,
         days_until_due: subscription.days_until_due ?? undefined,
