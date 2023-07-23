@@ -314,10 +314,14 @@ export const migrateSubscriptions = async (
       const trial_end: Stripe.SubscriptionCreateParams['trial_end'] =
         subscription.current_period_end;
 
-      const promotion_code: Stripe.SubscriptionCreateParams['promotion_code'] =
+      let promotion_code: Stripe.SubscriptionCreateParams['promotion_code'] =
         typeof subscription.discount?.promotion_code === 'string'
           ? subscription.discount?.promotion_code
           : subscription.discount?.promotion_code?.id;
+
+      if (subscription.discount?.coupon) {
+        promotion_code = undefined;
+      }
 
       const newSubscription = await newStripe.subscriptions.create({
         add_invoice_items: undefined,
