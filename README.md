@@ -2,6 +2,12 @@
 
 A Node-based CLI tool to migrate content from between Stripe accounts. Implements some of the checklist for [recreating settings in a new Stripe account](https://support.stripe.com/questions/checklist-for-recreating-settings-in-a-new-stripe-account).
 
+## Installation
+
+```bash
+npm install -g @beskar-labs/stripe-migrate
+```
+
 ## Usage
 
 Before using this CLI, ensure you use the Stripe CLI to copy PAN data across Stripe accounts. This copies Customers, Cards, Sources, Payment Methods and Bank Accounts, preserving the original Customer IDs. You can learn more about that [here](https://support.stripe.com/questions/copy-existing-account-data-to-a-new-stripe-account).
