@@ -18,7 +18,7 @@ stripe-migrate coupons --from sk_test_123 --to sk_test_456
 stripe-migrate subscriptions --from sk_test_123 --to sk_test_456
 ```
 
-You can also do a dry run of subscriptions, which anonymises and mocks 20 subscribed customers from your old account for testing:
+You can also do a dry run of subscriptions, which anonymises and mocks 10 subscribed customers from your old account for testing:
 
 ```bash
 stripe-migrate subscriptions --from sk_test_123 --to sk_test_456 --dry-run
@@ -30,4 +30,4 @@ This is a "mutli-run" CLI tool as it checks for existing matching data and skips
 
 ## Notes
 
-I highly recommend testing this with a Test Mode account first as you can delete all test data and start again. Once you're happy with the results, you can run it against your Live Mode account. Also, this tool does not migrate anything not mentioned above.
+I highly recommend testing this with a Test Mode account first as you can delete all test data and start again. Once you're happy with the results, you can run it against your Live Mode account. Also, this tool does not migrate anything not mentioned above. I take no responsibility for any data loss or corruption.
