@@ -1,7 +1,5 @@
 # stripe-migrate
 
-# WIP! Don't use this yet... unless you're gonna contribute.
-
 A Node-based CLI tool to migrate content from between Stripe accounts. Implements some of the checklist for [recreating settings in a new Stripe account](https://support.stripe.com/questions/checklist-for-recreating-settings-in-a-new-stripe-account).
 
 ## Usage
