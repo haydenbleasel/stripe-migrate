@@ -18,7 +18,7 @@ stripe-migrate coupons --from sk_test_123 --to sk_test_456
 stripe-migrate subscriptions --from sk_test_123 --to sk_test_456
 ```
 
-You can also do a dry run of subscriptions, which anonymises and mocks 10 subscribed customers from your old account for testing:
+You can also do a dry run of subscriptions, which anonymises and mocks 10 subscribed customers from your old account for testing. This is useful if you're running on a Test Mode account as your destination.
 
 ```bash
 stripe-migrate subscriptions --from sk_test_123 --to sk_test_456 --dry-run
