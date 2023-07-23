@@ -116,8 +116,6 @@ export const migrateSubscriptions = async (
           return;
         }
 
-        console.log(mockCustomers);
-
         const mockCustomer = mockCustomers.find(({ email }) =>
           oldCustomer.email
             ? email === getAnonymisedEmail(oldCustomer.email)
