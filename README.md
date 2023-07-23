@@ -24,6 +24,12 @@ You can also do a dry run of subscriptions, which anonymises and mocks 10 subscr
 stripe-migrate subscriptions --from sk_test_123 --to sk_test_456 --dry-run
 ```
 
+Additionally, you can pass in a list of customer IDs to migrate subscriptions for. This works with `--dry-run` too.
+
+```bash
+stripe-migrate subscriptions --from sk_test_123 --to sk_test_456 --customers cus_123,cus_456
+```
+
 Once your account has been migrated, simply update your API keys and redeploy your app.
 
 This is a "mutli-run" CLI tool as it checks for existing matching data and skips it. This means you can run it multiple times to ensure everything is migrated.
