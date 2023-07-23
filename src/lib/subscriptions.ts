@@ -15,7 +15,10 @@ export const fetchSubscriptions = async (stripe: Stripe) => {
   let hasMoreSubscriptions: boolean = true;
 
   while (hasMoreSubscriptions) {
-    const listParams: Stripe.SubscriptionListParams = { limit: 100 };
+    const listParams: Stripe.SubscriptionListParams = {
+      limit: 100,
+      expand: ['data.customer', 'data.default_payment_method'],
+    };
 
     if (startingAfter) {
       listParams.starting_after = startingAfter;
@@ -44,7 +47,7 @@ export const migrateSubscriptions = async (
   const mockCustomers: Stripe.Customer[] = [];
 
   if (dryRun) {
-    console.log(chalk.blue(`Dry run: mocking customers...`));
+    console.log(chalk.blue(`[Dry run] mocking customers...`));
 
     const oldCustomers = (
       await Promise.all(
@@ -67,6 +70,12 @@ export const migrateSubscriptions = async (
           name: customer.name ?? undefined,
           payment_method: 'pm_card_visa',
         });
+
+        console.log(
+          chalk.blue(
+            `[Dry run] mocked customer ${newCustomer.email} (${newCustomer.id})...`
+          )
+        );
 
         return newCustomer;
       })
@@ -107,13 +116,23 @@ export const migrateSubscriptions = async (
           return;
         }
 
+        console.log(mockCustomers);
+
         const mockCustomer = mockCustomers.find(({ email }) =>
-          email ? getAnonymisedEmail(email) === oldCustomer.email : null
+          oldCustomer.email
+            ? email === getAnonymisedEmail(oldCustomer.email)
+            : null
         );
 
         if (!mockCustomer) {
           return;
         }
+
+        console.log(
+          chalk.blue(
+            `[Dry run] found mock customer ${mockCustomer.email} (${mockCustomer.id})...`
+          )
+        );
 
         const paymentMethod = await newStripe.paymentMethods.list({
           customer: mockCustomer.id,
