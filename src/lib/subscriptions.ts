@@ -1,4 +1,12 @@
+import chalk from 'chalk';
 import Stripe from 'stripe';
+import crypto from 'node:crypto';
+
+const getAnonymisedEmail = (email: string) => {
+  const emailHash = crypto.createHash('md5').update(email).digest('hex');
+
+  return `${emailHash}@example.com`;
+};
 
 export const fetchSubscriptions = async (stripe: Stripe) => {
   const subscriptions = [];
@@ -29,9 +37,43 @@ export const fetchSubscriptions = async (stripe: Stripe) => {
 export const migrateSubscriptions = async (
   oldStripe: Stripe,
   newStripe: Stripe,
-  customerIds: string[]
+  customerIds: string[],
+  dryRun: boolean
 ) => {
   const oldSubscriptions = await fetchSubscriptions(oldStripe);
+  const mockCustomers: Stripe.Customer[] = [];
+
+  if (dryRun) {
+    console.log(chalk.blue(`Dry run: mocking customers...`));
+
+    const oldCustomers = (
+      await Promise.all(
+        oldSubscriptions.map(async (sub) =>
+          typeof sub.customer === 'string'
+            ? await oldStripe.customers.retrieve(sub.customer)
+            : sub.customer
+        )
+      )
+    )
+      .filter((customer) => !customer.deleted)
+      .slice(0, 20) as Stripe.Customer[];
+
+    const newCustomers = await Promise.all(
+      oldCustomers.map(async (customer) => {
+        const newCustomer = await newStripe.customers.create({
+          email: customer.email
+            ? getAnonymisedEmail(customer.email)
+            : undefined,
+          name: customer.name ?? undefined,
+          payment_method: 'pm_card_visa',
+        });
+
+        return newCustomer;
+      })
+    );
+
+    mockCustomers.push(...newCustomers);
+  }
 
   const promises = oldSubscriptions
 
@@ -41,10 +83,51 @@ export const migrateSubscriptions = async (
     .filter((subscription) => !subscription.cancel_at)
 
     .map(async (subscription) => {
-      const customerId =
+      let customerId =
         typeof subscription.customer === 'string'
           ? subscription.customer
           : subscription.customer?.id;
+
+      let default_payment_method =
+        typeof subscription.default_payment_method === 'string'
+          ? subscription.default_payment_method
+          : subscription.default_payment_method?.id;
+
+      let automatic_tax:
+        | Stripe.SubscriptionCreateParams.AutomaticTax
+        | undefined = subscription.automatic_tax;
+
+      if (dryRun) {
+        const oldCustomer =
+          typeof subscription.customer === 'string'
+            ? await oldStripe.customers.retrieve(subscription.customer)
+            : subscription.customer;
+
+        if (!oldCustomer || oldCustomer.deleted) {
+          return;
+        }
+
+        const mockCustomer = mockCustomers.find(({ email }) =>
+          email ? getAnonymisedEmail(email) === oldCustomer.email : null
+        );
+
+        if (!mockCustomer) {
+          return;
+        }
+
+        const paymentMethod = await newStripe.paymentMethods.list({
+          customer: mockCustomer.id,
+          type: 'card',
+        });
+
+        if (!paymentMethod.data[0]) {
+          throw new Error('Failed to find payment method on mock customer');
+        }
+
+        customerId = mockCustomer.id;
+        default_payment_method = paymentMethod.data[0].id;
+        automatic_tax = undefined;
+      }
 
       const billing_thresholds = subscription.billing_thresholds
         ? {
@@ -54,11 +137,6 @@ export const migrateSubscriptions = async (
               undefined,
           }
         : undefined;
-
-      const default_payment_method =
-        typeof subscription.default_payment_method === 'string'
-          ? subscription.default_payment_method
-          : subscription.default_payment_method?.id;
 
       const default_source =
         typeof subscription.default_source === 'string'
@@ -201,10 +279,6 @@ export const migrateSubscriptions = async (
               subscription.transfer_data.amount_percent ?? undefined,
           }
         : undefined;
-
-      const automatic_tax:
-        | Stripe.SubscriptionCreateParams.AutomaticTax
-        | undefined = subscription.automatic_tax;
 
       // Setting the trial_end to the current period end is important
       // for maintaining the same billing period:

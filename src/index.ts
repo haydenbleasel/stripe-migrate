@@ -101,10 +101,15 @@ program
     'Only migrate customers with these Customer IDs (comma separated)',
     []
   )
-  .action(async ({ from, to, customerIds }) => {
+  .option(
+    '--dry-run',
+    'Mock customers from the old account and simulate on the new',
+    false
+  )
+  .action(async ({ from, to, customerIds, dryRun }) => {
     try {
       const { oldStripe, newStripe } = createStripeInstances(from, to);
-      await migrateSubscriptions(oldStripe, newStripe, customerIds);
+      await migrateSubscriptions(oldStripe, newStripe, customerIds, dryRun);
     } catch (error) {
       handleError(error);
     }
