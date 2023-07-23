@@ -100,19 +100,18 @@ export const migrateSubscriptions = async (
     .filter((subscription) => !subscription.cancel_at)
 
     .map(async (subscription) => {
-      let customerId =
+      let customerId: Stripe.SubscriptionCreateParams['customer'] =
         typeof subscription.customer === 'string'
           ? subscription.customer
           : subscription.customer?.id;
 
-      let default_payment_method =
+      let default_payment_method: Stripe.SubscriptionCreateParams['default_payment_method'] =
         typeof subscription.default_payment_method === 'string'
           ? subscription.default_payment_method
           : subscription.default_payment_method?.id;
 
-      let automatic_tax:
-        | Stripe.SubscriptionCreateParams.AutomaticTax
-        | undefined = subscription.automatic_tax;
+      let automatic_tax: Stripe.SubscriptionCreateParams['automatic_tax'] =
+        subscription.automatic_tax;
 
       if (dryRun) {
         const oldCustomer =
@@ -156,162 +155,169 @@ export const migrateSubscriptions = async (
         return;
       }
 
-      const billing_thresholds = subscription.billing_thresholds
-        ? {
-            amount_gte: subscription.billing_thresholds.amount_gte ?? undefined,
-            reset_billing_cycle_anchor:
-              subscription.billing_thresholds.reset_billing_cycle_anchor ??
-              undefined,
-          }
-        : undefined;
+      const billing_thresholds: Stripe.SubscriptionCreateParams['billing_thresholds'] =
+        subscription.billing_thresholds
+          ? {
+              amount_gte:
+                subscription.billing_thresholds.amount_gte ?? undefined,
+              reset_billing_cycle_anchor:
+                subscription.billing_thresholds.reset_billing_cycle_anchor ??
+                undefined,
+            }
+          : undefined;
 
-      const default_source =
+      const default_source: Stripe.SubscriptionCreateParams['default_source'] =
         typeof subscription.default_source === 'string'
           ? subscription.default_source
           : subscription.default_source?.id;
 
-      const application_fee_percent =
+      const application_fee_percent: Stripe.SubscriptionCreateParams['application_fee_percent'] =
         subscription.application_fee_percent ?? undefined;
 
-      const default_tax_rates = subscription.default_tax_rates
-        ? subscription.default_tax_rates.map((rate) => rate.id)
-        : undefined;
-
-      const items: Stripe.SubscriptionCreateParams.Item[] | undefined =
-        subscription.items
-          ? subscription.items.data.map((item) => ({
-              billing_thresholds: item.billing_thresholds?.usage_gte
-                ? {
-                    usage_gte: item.billing_thresholds.usage_gte ?? undefined,
-                  }
-                : undefined,
-              metadata: item.metadata,
-              // plan: item.plan.id,
-              price: item.price?.id,
-              price_data: undefined,
-              quantity: item.quantity,
-              tax_rates: item.tax_rates
-                ? item.tax_rates.map((rate) => rate.id)
-                : undefined,
-            }))
+      const default_tax_rates: Stripe.SubscriptionCreateParams['default_tax_rates'] =
+        subscription.default_tax_rates
+          ? subscription.default_tax_rates.map((rate) => rate.id)
           : undefined;
 
-      const on_behalf_of =
+      const items: Stripe.SubscriptionCreateParams['items'] = subscription.items
+        ? subscription.items.data.map((item) => ({
+            billing_thresholds: item.billing_thresholds?.usage_gte
+              ? {
+                  usage_gte: item.billing_thresholds.usage_gte ?? undefined,
+                }
+              : undefined,
+            metadata: item.metadata,
+            // plan: item.plan.id,
+            price: item.price?.id,
+            price_data: undefined,
+            quantity: item.quantity,
+            tax_rates: item.tax_rates
+              ? item.tax_rates.map((rate) => rate.id)
+              : undefined,
+          }))
+        : undefined;
+
+      const on_behalf_of: Stripe.SubscriptionCreateParams['on_behalf_of'] =
         typeof subscription.on_behalf_of === 'string'
           ? subscription.on_behalf_of
           : subscription.on_behalf_of?.id;
 
-      const payment_settings:
-        | Stripe.SubscriptionCreateParams.PaymentSettings
-        | undefined = subscription.payment_settings
-        ? {
-            payment_method_options: subscription.payment_settings
-              .payment_method_options
-              ? {
-                  acss_debit: subscription.payment_settings
-                    .payment_method_options.acss_debit
-                    ? {
-                        mandate_options: subscription.payment_settings
-                          .payment_method_options.acss_debit.mandate_options
-                          ? {
-                              transaction_type:
-                                subscription.payment_settings
-                                  .payment_method_options.acss_debit
-                                  .mandate_options.transaction_type ??
-                                undefined,
-                            }
-                          : undefined,
-                        verification_method:
-                          subscription.payment_settings.payment_method_options
-                            .acss_debit.verification_method ?? undefined,
-                      }
-                    : undefined,
-                  bancontact:
-                    subscription.payment_settings.payment_method_options
-                      .bancontact ?? undefined,
-                  card: subscription.payment_settings.payment_method_options
-                    .card
-                    ? {
-                        mandate_options: subscription.payment_settings
-                          .payment_method_options.card.mandate_options
-                          ? {
-                              amount:
-                                subscription.payment_settings
-                                  .payment_method_options.card.mandate_options
-                                  .amount ?? undefined,
-                              amount_type:
-                                subscription.payment_settings
-                                  .payment_method_options.card.mandate_options
-                                  .amount_type ?? undefined,
-                              description:
-                                subscription.payment_settings
-                                  .payment_method_options.card.mandate_options
-                                  .description ?? undefined,
-                            }
-                          : undefined,
-                        network:
-                          subscription.payment_settings.payment_method_options
-                            .card.network ?? undefined,
-                        request_three_d_secure:
-                          subscription.payment_settings.payment_method_options
-                            .card.request_three_d_secure ?? undefined,
-                      }
-                    : undefined,
-                  customer_balance: subscription.payment_settings
-                    .payment_method_options.customer_balance
-                    ? {
-                        bank_transfer: subscription.payment_settings
-                          .payment_method_options.customer_balance.bank_transfer
-                          ? {
-                              eu_bank_transfer:
-                                subscription.payment_settings
-                                  .payment_method_options.customer_balance
-                                  .bank_transfer.eu_bank_transfer ?? undefined,
-                              type:
-                                subscription.payment_settings
-                                  .payment_method_options.customer_balance
-                                  .bank_transfer.type ?? undefined,
-                            }
-                          : undefined,
-                        funding_type:
-                          subscription.payment_settings.payment_method_options
-                            .customer_balance.funding_type ?? undefined,
-                      }
-                    : undefined,
-                  konbini:
-                    subscription.payment_settings.payment_method_options
-                      .konbini ?? undefined,
-                  us_bank_account:
-                    subscription.payment_settings.payment_method_options
-                      .us_bank_account ?? undefined,
-                }
-              : undefined,
-            payment_method_types:
-              subscription.payment_settings.payment_method_types,
-            save_default_payment_method:
-              subscription.payment_settings.save_default_payment_method ??
-              undefined,
-          }
-        : undefined;
+      const payment_settings: Stripe.SubscriptionCreateParams['payment_settings'] =
+        subscription.payment_settings
+          ? {
+              payment_method_options: subscription.payment_settings
+                .payment_method_options
+                ? {
+                    acss_debit: subscription.payment_settings
+                      .payment_method_options.acss_debit
+                      ? {
+                          mandate_options: subscription.payment_settings
+                            .payment_method_options.acss_debit.mandate_options
+                            ? {
+                                transaction_type:
+                                  subscription.payment_settings
+                                    .payment_method_options.acss_debit
+                                    .mandate_options.transaction_type ??
+                                  undefined,
+                              }
+                            : undefined,
+                          verification_method:
+                            subscription.payment_settings.payment_method_options
+                              .acss_debit.verification_method ?? undefined,
+                        }
+                      : undefined,
+                    bancontact:
+                      subscription.payment_settings.payment_method_options
+                        .bancontact ?? undefined,
+                    card: subscription.payment_settings.payment_method_options
+                      .card
+                      ? {
+                          mandate_options: subscription.payment_settings
+                            .payment_method_options.card.mandate_options
+                            ? {
+                                amount:
+                                  subscription.payment_settings
+                                    .payment_method_options.card.mandate_options
+                                    .amount ?? undefined,
+                                amount_type:
+                                  subscription.payment_settings
+                                    .payment_method_options.card.mandate_options
+                                    .amount_type ?? undefined,
+                                description:
+                                  subscription.payment_settings
+                                    .payment_method_options.card.mandate_options
+                                    .description ?? undefined,
+                              }
+                            : undefined,
+                          network:
+                            subscription.payment_settings.payment_method_options
+                              .card.network ?? undefined,
+                          request_three_d_secure:
+                            subscription.payment_settings.payment_method_options
+                              .card.request_three_d_secure ?? undefined,
+                        }
+                      : undefined,
+                    customer_balance: subscription.payment_settings
+                      .payment_method_options.customer_balance
+                      ? {
+                          bank_transfer: subscription.payment_settings
+                            .payment_method_options.customer_balance
+                            .bank_transfer
+                            ? {
+                                eu_bank_transfer:
+                                  subscription.payment_settings
+                                    .payment_method_options.customer_balance
+                                    .bank_transfer.eu_bank_transfer ??
+                                  undefined,
+                                type:
+                                  subscription.payment_settings
+                                    .payment_method_options.customer_balance
+                                    .bank_transfer.type ?? undefined,
+                              }
+                            : undefined,
+                          funding_type:
+                            subscription.payment_settings.payment_method_options
+                              .customer_balance.funding_type ?? undefined,
+                        }
+                      : undefined,
+                    konbini:
+                      subscription.payment_settings.payment_method_options
+                        .konbini ?? undefined,
+                    us_bank_account:
+                      subscription.payment_settings.payment_method_options
+                        .us_bank_account ?? undefined,
+                  }
+                : undefined,
+              payment_method_types:
+                subscription.payment_settings.payment_method_types,
+              save_default_payment_method:
+                subscription.payment_settings.save_default_payment_method ??
+                undefined,
+            }
+          : undefined;
 
-      const transfer_data:
-        | Stripe.SubscriptionCreateParams.TransferData
-        | undefined = subscription.transfer_data
-        ? {
-            destination:
-              typeof subscription.transfer_data.destination === 'string'
-                ? subscription.transfer_data.destination
-                : subscription.transfer_data.destination?.id,
-            amount_percent:
-              subscription.transfer_data.amount_percent ?? undefined,
-          }
-        : undefined;
+      const transfer_data: Stripe.SubscriptionCreateParams['transfer_data'] =
+        subscription.transfer_data
+          ? {
+              destination:
+                typeof subscription.transfer_data.destination === 'string'
+                  ? subscription.transfer_data.destination
+                  : subscription.transfer_data.destination?.id,
+              amount_percent:
+                subscription.transfer_data.amount_percent ?? undefined,
+            }
+          : undefined;
 
       // Setting the trial_end to the current period end is important
       // for maintaining the same billing period:
       // https://support.stripe.com/questions/recreate-subscriptions-and-plans-after-moving-customer-data-to-a-new-stripe-account
-      const trial_end: number | 'now' | undefined =
+      const trial_end: Stripe.SubscriptionCreateParams['trial_end'] =
         subscription.current_period_end;
+
+      const promotion_code: Stripe.SubscriptionCreateParams['promotion_code'] =
+        typeof subscription.discount?.promotion_code === 'string'
+          ? subscription.discount?.promotion_code
+          : subscription.discount?.promotion_code?.id;
 
       const newSubscription = await newStripe.subscriptions.create({
         add_invoice_items: undefined,
@@ -340,7 +346,7 @@ export const migrateSubscriptions = async (
         payment_settings,
         pending_invoice_item_interval:
           subscription.pending_invoice_item_interval,
-        promotion_code: undefined,
+        promotion_code,
         proration_behavior: undefined,
         transfer_data,
         trial_end,
