@@ -1,3 +1,16 @@
+# v1.0.7 (Mon Jul 24 2023)
+
+#### ⚠️ Pushed to `main`
+
+- Merge branch 'main' of https://github.com/beskar-co/stripe-migrate ([@haydenbleasel](https://github.com/haydenbleasel))
+- Fix typo ([@haydenbleasel](https://github.com/haydenbleasel))
+
+#### Authors: 1
+
+- Hayden Bleasel ([@haydenbleasel](https://github.com/haydenbleasel))
+
+---
+
 # v1.0.6 (Mon Jul 24 2023)
 
 #### ⚠️ Pushed to `main`
