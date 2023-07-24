@@ -183,7 +183,6 @@ export const migrateSubscriptions = async (
 
       const customerPaymentMethod = await newStripe.paymentMethods.list({
         customer: customerId,
-        type: 'card',
       });
 
       if (!customerPaymentMethod.data[0]) {
