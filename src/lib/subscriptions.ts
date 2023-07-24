@@ -119,6 +119,14 @@ export const migrateSubscriptions = async (
         } customers...`
       )
     );
+
+    customerIds.forEach((customerId) => {
+      const customer = oldCustomers.find(({ id }) => id === customerId);
+
+      if (!customer) {
+        throw new Error(`Failed to find customer ${customerId}`);
+      }
+    });
   }
 
   const promises = oldSubscriptions
