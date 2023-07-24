@@ -23,8 +23,14 @@ const createStripeInstances = (
     throw new Error('<to> argument is required');
   }
 
-  const oldStripe = new Stripe(from, { apiVersion: '2022-11-15' });
-  const newStripe = new Stripe(to, { apiVersion: '2022-11-15' });
+  const oldStripe = new Stripe(from, {
+    apiVersion: '2022-11-15',
+    telemetry: false,
+  });
+  const newStripe = new Stripe(to, {
+    apiVersion: '2022-11-15',
+    telemetry: false,
+  });
 
   return { oldStripe, newStripe };
 };
