@@ -37,6 +37,34 @@ export const fetchSubscriptions = async (stripe: Stripe) => {
   return subscriptions;
 };
 
+export const fetchCustomers = async (stripe: Stripe) => {
+  const customers = [];
+
+  let startingAfter: Stripe.Subscription['id'] = '';
+  let hasMoreCustomers: boolean = true;
+
+  while (hasMoreCustomers) {
+    const listParams: Stripe.SubscriptionListParams = {
+      limit: 100,
+    };
+
+    if (startingAfter) {
+      listParams.starting_after = startingAfter;
+    }
+
+    const response = await stripe.customers.list(listParams);
+
+    if (response.data.length > 0) {
+      customers.push(...response.data);
+      startingAfter = response.data[response.data.length - 1].id;
+    } else {
+      hasMoreCustomers = false;
+    }
+  }
+
+  return customers;
+};
+
 export const migrateSubscriptions = async (
   oldStripe: Stripe,
   newStripe: Stripe,
@@ -44,6 +72,7 @@ export const migrateSubscriptions = async (
   dryRun: boolean
 ) => {
   const oldSubscriptions = await fetchSubscriptions(oldStripe);
+  const oldCustomers = await fetchCustomers(oldStripe);
   const mockCustomers: Stripe.Customer[] = [];
 
   if (dryRun) {
@@ -55,22 +84,14 @@ export const migrateSubscriptions = async (
       )
     );
 
-    const oldCustomerPromises = customerIds.length
-      ? customerIds.map(async (id) => await oldStripe.customers.retrieve(id))
-      : oldSubscriptions
-          .map(async (sub) =>
-            typeof sub.customer === 'string'
-              ? await oldStripe.customers.retrieve(sub.customer)
-              : sub.customer
-          )
-          .slice(0, 20);
-
-    const oldCustomers = (await Promise.all(oldCustomerPromises)).filter(
-      (customer) => !customer.deleted
-    ) as Stripe.Customer[];
+    const filteredOldCustomers = customerIds.length
+      ? oldCustomers
+          .filter((customer) => !customer.deleted)
+          .filter(({ id }) => customerIds.includes(id))
+      : oldCustomers.filter((customer) => !customer.deleted).slice(0, 20);
 
     const newCustomers = await Promise.all(
-      oldCustomers.map(async (customer) => {
+      filteredOldCustomers.map(async (customer) => {
         const newCustomer = await newStripe.customers.create({
           email: customer.email
             ? getAnonymisedEmail(customer.email)
