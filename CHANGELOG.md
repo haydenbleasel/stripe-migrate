@@ -1,3 +1,17 @@
+# v1.0.8 (Mon Jul 24 2023)
+
+#### ⚠️ Pushed to `main`
+
+- Update subscriptions.ts ([@haydenbleasel](https://github.com/haydenbleasel))
+- Merge branch 'main' of https://github.com/beskar-co/stripe-migrate ([@haydenbleasel](https://github.com/haydenbleasel))
+- Support all payment methods ([@haydenbleasel](https://github.com/haydenbleasel))
+
+#### Authors: 1
+
+- Hayden Bleasel ([@haydenbleasel](https://github.com/haydenbleasel))
+
+---
+
 # v1.0.7 (Mon Jul 24 2023)
 
 #### ⚠️ Pushed to `main`
