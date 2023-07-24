@@ -34,6 +34,12 @@ export const fetchSubscriptions = async (stripe: Stripe) => {
     }
   }
 
+  console.log(
+    chalk.bgGrey(
+      `Successfully fetched ${subscriptions.length} subscriptions...`
+    )
+  );
+
   return subscriptions;
 };
 
@@ -61,6 +67,10 @@ export const fetchCustomers = async (stripe: Stripe) => {
       hasMoreCustomers = false;
     }
   }
+
+  console.log(
+    chalk.bgGrey(`Successfully fetched ${customers.length} customers...`)
+  );
 
   return customers;
 };

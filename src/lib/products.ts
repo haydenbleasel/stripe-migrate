@@ -24,6 +24,10 @@ const fetchProducts = async (stripe: Stripe) => {
     }
   }
 
+  console.log(
+    chalk.bgGrey(`Successfully fetched ${products.length} products...`)
+  );
+
   return products;
 };
 

@@ -24,6 +24,12 @@ const fetchWebhooks = async (stripe: Stripe) => {
     }
   }
 
+  console.log(
+    chalk.bgGrey(
+      `Successfully fetched ${webhookEndpoints.length} webhook endpoints...`
+    )
+  );
+
   return webhookEndpoints;
 };
 

@@ -24,6 +24,8 @@ const fetchPlans = async (stripe: Stripe) => {
     }
   }
 
+  console.log(chalk.bgGrey(`Successfully fetched ${plans.length} plans...`));
+
   return plans;
 };
 

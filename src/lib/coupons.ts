@@ -24,6 +24,10 @@ const fetchCoupons = async (stripe: Stripe) => {
     }
   }
 
+  console.log(
+    chalk.bgGrey(`Successfully fetched ${coupons.length} coupons...`)
+  );
+
   return coupons;
 };
 
