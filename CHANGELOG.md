@@ -1,3 +1,15 @@
+# v1.0.9 (Mon Jul 24 2023)
+
+#### ⚠️ Pushed to `main`
+
+- Add ability to migrate "cancelAt" subscriptions ([@haydenbleasel](https://github.com/haydenbleasel))
+
+#### Authors: 1
+
+- Hayden Bleasel ([@haydenbleasel](https://github.com/haydenbleasel))
+
+---
+
 # v1.0.8 (Mon Jul 24 2023)
 
 #### ⚠️ Pushed to `main`
