@@ -111,6 +111,14 @@ export const migrateSubscriptions = async (
     );
 
     mockCustomers.push(...newCustomers);
+  } else {
+    console.log(
+      chalk.blue(
+        `Migrating ${
+          customerIds.length ? `${customerIds.length} select` : 'all'
+        } customers...`
+      )
+    );
   }
 
   const promises = oldSubscriptions
