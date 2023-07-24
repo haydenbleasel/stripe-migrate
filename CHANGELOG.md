@@ -1,3 +1,16 @@
+# v1.0.5 (Mon Jul 24 2023)
+
+#### ⚠️ Pushed to `main`
+
+- Disable Telemetry to avoid warnings in console ([@haydenbleasel](https://github.com/haydenbleasel))
+- Fix payment methods on new customer ([@haydenbleasel](https://github.com/haydenbleasel))
+
+#### Authors: 1
+
+- Hayden Bleasel ([@haydenbleasel](https://github.com/haydenbleasel))
+
+---
+
 # v1.0.4 (Mon Jul 24 2023)
 
 #### ⚠️ Pushed to `main`
