@@ -75,6 +75,12 @@ export const migrateSubscriptions = async (
   const oldCustomers = await fetchCustomers(oldStripe);
   const mockCustomers: Stripe.Customer[] = [];
 
+  let oldCustomersToMigrate = customerIds.length
+    ? oldCustomers
+        .filter(({ id }) => customerIds.includes(id))
+        .filter((customer) => !customer.deleted)
+    : oldCustomers.filter((customer) => !customer.deleted);
+
   if (dryRun) {
     console.log(
       chalk.blue(
@@ -84,14 +90,12 @@ export const migrateSubscriptions = async (
       )
     );
 
-    const filteredOldCustomers = customerIds.length
-      ? oldCustomers
-          .filter((customer) => !customer.deleted)
-          .filter(({ id }) => customerIds.includes(id))
-      : oldCustomers.filter((customer) => !customer.deleted).slice(0, 20);
+    if (!customerIds.length) {
+      oldCustomersToMigrate = oldCustomersToMigrate.slice(0, 20);
+    }
 
     const newCustomers = await Promise.all(
-      filteredOldCustomers.map(async (customer) => {
+      oldCustomersToMigrate.map(async (customer) => {
         const newCustomer = await newStripe.customers.create({
           email: customer.email
             ? getAnonymisedEmail(customer.email)
@@ -135,6 +139,16 @@ export const migrateSubscriptions = async (
     .filter((subscription) => subscription.status === 'active')
     .filter((subscription) => !subscription.cancel_at_period_end)
     .filter((subscription) => !subscription.cancel_at)
+
+    // Only migrate the customers we want
+    .filter((subscription) => {
+      const customerId =
+        typeof subscription.customer === 'string'
+          ? subscription.customer
+          : subscription.customer?.id;
+
+      return oldCustomersToMigrate.find(({ id }) => id === customerId);
+    })
 
     .map(async (subscription) => {
       let customerId: Stripe.SubscriptionCreateParams['customer'] =
