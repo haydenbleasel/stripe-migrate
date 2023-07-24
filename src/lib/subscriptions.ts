@@ -323,6 +323,9 @@ export const migrateSubscriptions = async (
         promotion_code = undefined;
       }
 
+      const pending_invoice_item_interval: Stripe.SubscriptionCreateParams['pending_invoice_item_interval'] =
+        subscription.pending_invoice_item_interval;
+
       const newSubscription = await newStripe.subscriptions.create({
         add_invoice_items: undefined,
         application_fee_percent,
@@ -348,8 +351,7 @@ export const migrateSubscriptions = async (
         on_behalf_of,
         payment_behavior: undefined,
         payment_settings,
-        pending_invoice_item_interval:
-          subscription.pending_invoice_item_interval,
+        pending_invoice_item_interval,
         promotion_code,
         proration_behavior: undefined,
         transfer_data,
