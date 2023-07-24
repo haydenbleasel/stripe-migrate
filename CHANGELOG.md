@@ -1,3 +1,20 @@
+# v1.0.6 (Mon Jul 24 2023)
+
+#### ⚠️ Pushed to `main`
+
+- Merge branch 'main' of https://github.com/beskar-co/stripe-migrate ([@haydenbleasel](https://github.com/haydenbleasel))
+- Add option to omit customer ids ([@haydenbleasel](https://github.com/haydenbleasel))
+- Improve logging ([@haydenbleasel](https://github.com/haydenbleasel))
+- Improve migration filtering ([@haydenbleasel](https://github.com/haydenbleasel))
+- Improve error checking ([@haydenbleasel](https://github.com/haydenbleasel))
+- Fetch all oldCustomers to avoid rate limiter ([@haydenbleasel](https://github.com/haydenbleasel))
+
+#### Authors: 1
+
+- Hayden Bleasel ([@haydenbleasel](https://github.com/haydenbleasel))
+
+---
+
 # v1.0.5 (Mon Jul 24 2023)
 
 #### ⚠️ Pushed to `main`
