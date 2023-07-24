@@ -1,6 +1,6 @@
 {
   "name": "@beskar-labs/stripe-migrate",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "A Node-based CLI tool to migrate content from between Stripe accounts.",
   "main": "dist/index.js",
   "publishConfig": {
