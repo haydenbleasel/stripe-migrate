@@ -108,17 +108,23 @@ program
     ''
   )
   .option(
+    '--omitCustomerIds <customerIds>',
+    'Omit customers with these Customer IDs (comma separated)',
+    ''
+  )
+  .option(
     '--dry-run',
     'Mock customers from the old account and simulate on the new',
     false
   )
-  .action(async ({ from, to, customerIds, dryRun }) => {
+  .action(async ({ from, to, customerIds, omitCustomerIds, dryRun }) => {
     try {
       const { oldStripe, newStripe } = createStripeInstances(from, to);
       await migrateSubscriptions(
         oldStripe,
         newStripe,
-        customerIds.split(','),
+        customerIds.split(',').filter(Boolean),
+        omitCustomerIds.split(',').filter(Boolean),
         dryRun
       );
     } catch (error) {

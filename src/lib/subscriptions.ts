@@ -79,17 +79,36 @@ export const migrateSubscriptions = async (
   oldStripe: Stripe,
   newStripe: Stripe,
   customerIds: string[],
+  omitCustomerIds: string[],
   dryRun: boolean
 ) => {
   const oldSubscriptions = await fetchSubscriptions(oldStripe);
   const oldCustomers = await fetchCustomers(oldStripe);
   const mockCustomers: Stripe.Customer[] = [];
 
-  let oldCustomersToMigrate = customerIds.length
-    ? oldCustomers
-        .filter(({ id }) => customerIds.includes(id))
-        .filter((customer) => !customer.deleted)
-    : oldCustomers.filter((customer) => !customer.deleted);
+  let oldCustomersToMigrate = oldCustomers.filter(
+    (customer) => !customer.deleted
+  );
+
+  if (customerIds.length) {
+    console.log(
+      chalk.blue(
+        `Filtering ${oldCustomersToMigrate.length} customers to only include ${customerIds.length} customer ids...`
+      )
+    );
+    oldCustomersToMigrate = oldCustomersToMigrate.filter(({ id }) =>
+      customerIds.includes(id)
+    );
+  } else if (omitCustomerIds.length) {
+    console.log(
+      chalk.blue(
+        `Filtering ${oldCustomersToMigrate.length} customers to omit ${omitCustomerIds.length} customer ids...`
+      )
+    );
+    oldCustomersToMigrate = oldCustomersToMigrate.filter(
+      ({ id }) => !omitCustomerIds.includes(id)
+    );
+  }
 
   if (dryRun) {
     console.log(
@@ -126,13 +145,7 @@ export const migrateSubscriptions = async (
 
     mockCustomers.push(...newCustomers);
   } else {
-    console.log(
-      chalk.blue(
-        `Migrating ${
-          customerIds.length ? `${customerIds.length} select` : 'all'
-        } customers...`
-      )
-    );
+    console.log(chalk.blue(`Migrating ${oldCustomersToMigrate} customers...`));
 
     customerIds.forEach((customerId) => {
       const customer = oldCustomers.find(({ id }) => id === customerId);
