@@ -145,7 +145,9 @@ export const migrateSubscriptions = async (
 
     mockCustomers.push(...newCustomers);
   } else {
-    console.log(chalk.blue(`Migrating ${oldCustomersToMigrate} customers...`));
+    console.log(
+      chalk.blue(`Migrating ${oldCustomersToMigrate.length} customers...`)
+    );
 
     customerIds.forEach((customerId) => {
       const customer = oldCustomers.find(({ id }) => id === customerId);
