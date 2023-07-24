@@ -1,3 +1,15 @@
+# v1.0.4 (Mon Jul 24 2023)
+
+#### ⚠️ Pushed to `main`
+
+- Update subscriptions.ts ([@haydenbleasel](https://github.com/haydenbleasel))
+
+#### Authors: 1
+
+- Hayden Bleasel ([@haydenbleasel](https://github.com/haydenbleasel))
+
+---
+
 # v1.0.3 (Sun Jul 23 2023)
 
 #### ⚠️ Pushed to `main`
