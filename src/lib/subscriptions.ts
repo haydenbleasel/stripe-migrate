@@ -105,10 +105,17 @@ export const migrateSubscriptions = async (
           ? subscription.customer
           : subscription.customer?.id;
 
+      const customerPaymentMethod = await newStripe.paymentMethods.list({
+        customer: customerId,
+        type: 'card',
+      });
+
+      if (!customerPaymentMethod.data[0]) {
+        throw new Error('Failed to find payment method on customer');
+      }
+
       let default_payment_method: Stripe.SubscriptionCreateParams['default_payment_method'] =
-        typeof subscription.default_payment_method === 'string'
-          ? subscription.default_payment_method
-          : subscription.default_payment_method?.id;
+        customerPaymentMethod.data[0].id;
 
       let automatic_tax: Stripe.SubscriptionCreateParams['automatic_tax'] =
         subscription.automatic_tax;
