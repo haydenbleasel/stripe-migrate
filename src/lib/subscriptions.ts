@@ -162,8 +162,6 @@ export const migrateSubscriptions = async (
 
     // Only migrate active subscriptions
     .filter((subscription) => subscription.status === 'active')
-    .filter((subscription) => !subscription.cancel_at_period_end)
-    .filter((subscription) => !subscription.cancel_at)
 
     // Only migrate the customers we want
     .filter((subscription) => {
@@ -407,6 +405,13 @@ export const migrateSubscriptions = async (
       const pending_invoice_item_interval: Stripe.SubscriptionCreateParams['pending_invoice_item_interval'] =
         subscription.pending_invoice_item_interval;
 
+      let cancel_at: Stripe.SubscriptionCreateParams['cancel_at'] =
+        subscription.cancel_at ?? undefined;
+
+      if (subscription.cancel_at_period_end) {
+        cancel_at = undefined;
+      }
+
       const newSubscription = await newStripe.subscriptions.create({
         add_invoice_items: undefined,
         application_fee_percent,
@@ -415,7 +420,7 @@ export const migrateSubscriptions = async (
         billing_cycle_anchor: undefined,
         billing_thresholds,
         cancel_at_period_end: subscription.cancel_at_period_end,
-        cancel_at: subscription.cancel_at ?? undefined,
+        cancel_at,
         collection_method: subscription.collection_method,
         coupon: subscription.discount?.coupon.id ?? undefined,
         currency: subscription.currency,
