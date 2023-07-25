@@ -47,6 +47,7 @@ I highly recommend testing this with a Test Mode account first as you can delete
 - Stripe rate limits API requests to 100 per second. This tool does not currently handle this, so you may need to run it multiple times to migrate all your data.
 - Can't migrate overdue subscriptions. This is because the Stripe API doesn't allow you to create a subscription with a past due date. You'll need to manually deal with these.
 - Nothing to do with this repo, but I noticed Stripe's PAN copy tool doesn't capture Link payment methods.
+- When migrating products, prices have an unset tax behaviour. Needs fixing.
 
 ## Other
 
