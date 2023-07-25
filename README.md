@@ -47,3 +47,58 @@ I highly recommend testing this with a Test Mode account first as you can delete
 - Stripe rate limits API requests to 100 per second. This tool does not currently handle this, so you may need to run it multiple times to migrate all your data.
 - Can't migrate overdue subscriptions. This is because the Stripe API doesn't allow you to create a subscription with a past due date. You'll need to manually deal with these.
 - Nothing to do with this repo, but I noticed Stripe's PAN copy tool doesn't capture Link payment methods.
+
+## Other
+
+To cancel all the subscriptions in your old account, run this:
+
+```ts
+import Stripe from 'stripe';
+
+const stripe = new Stripe('[your secret key]', {
+  apiVersion: '2022-11-15',
+  telemetry: false,
+});
+
+export const fetchSubscriptions = async (stripe: Stripe) => {
+  const subscriptions = [];
+
+  let startingAfter: Stripe.Subscription['id'] = '';
+  let hasMoreSubscriptions: boolean = true;
+
+  while (hasMoreSubscriptions) {
+    const listParams: Stripe.SubscriptionListParams = {
+      limit: 100,
+    };
+
+    if (startingAfter) {
+      listParams.starting_after = startingAfter;
+    }
+
+    const response = await stripe.subscriptions.list(listParams);
+
+    if (response.data.length > 0) {
+      subscriptions.push(...response.data);
+      startingAfter = response.data[response.data.length - 1].id;
+    } else {
+      hasMoreSubscriptions = false;
+    }
+  }
+
+  return subscriptions;
+};
+
+const main = async () => {
+  const subscriptions = await fetchSubscriptions(stripe);
+
+  const promises = subscriptions.map(async (subscription) => {
+    await stripe.subscriptions.del(subscription.id);
+  });
+
+  await Promise.all(promises);
+
+  console.log('done');
+};
+
+main();
+```
