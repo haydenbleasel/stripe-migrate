@@ -5,7 +5,7 @@ A Node-based CLI tool to migrate content from between Stripe accounts. Implement
 ## Installation
 
 ```bash
-npm install -g @beskar-labs/stripe-migrate
+npm install -g stripe-migrate
 ```
 
 ## Usage

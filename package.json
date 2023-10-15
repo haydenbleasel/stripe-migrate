@@ -1,5 +1,5 @@
 {
-  "name": "@beskar-labs/stripe-migrate",
+  "name": "stripe-migrate",
   "version": "1.0.14",
   "description": "A Node-based CLI tool to migrate content from between Stripe accounts.",
   "main": "dist/index.js",
@@ -12,7 +12,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/beskar-co/stripe-migrate.git"
+    "url": "git+https://github.com/haydenbleasel/stripe-migrate.git"
   },
   "keywords": [
     "stripe",
@@ -21,9 +21,9 @@
     "data"
   ],
   "bugs": {
-    "url": "https://github.com/beskar-co/stripe-migrate/issues"
+    "url": "https://github.com/haydenbleasel/stripe-migrate/issues"
   },
-  "homepage": "https://github.com/beskar-co/stripe-migrate#readme",
+  "homepage": "https://github.com/haydenbleasel/stripe-migrate#readme",
   "scripts": {
     "build": "tsup",
     "test": "echo \"Error: no test specified\" && exit 1"
