@@ -1,11 +1,11 @@
-import chalk from 'chalk';
-import Stripe from 'stripe';
+import chalk from "chalk";
+import type Stripe from "stripe";
 
 export const fetchPlans = async (stripe: Stripe) => {
-  const plans = [];
+  const plans: Stripe.Plan[] = [];
 
-  let startingAfter: Stripe.Plan['id'] = '';
-  let hasMorePlans: boolean = true;
+  let startingAfter: Stripe.Plan["id"] = "";
+  let hasMorePlans = true;
 
   while (hasMorePlans) {
     const listParams: Stripe.PlanListParams = { limit: 100 };
@@ -19,7 +19,7 @@ export const fetchPlans = async (stripe: Stripe) => {
     plans.push(...response.data);
 
     if (response.has_more && response.data.length > 0) {
-      startingAfter = response.data[response.data.length - 1].id;
+      startingAfter = response.data.at(-1)?.id ?? "";
     } else {
       hasMorePlans = false;
     }
@@ -39,11 +39,11 @@ export const migratePlans = async (oldStripe: Stripe, newStripe: Stripe) => {
     .filter((plan) => plan.active)
     .map(async (plan) => {
       const productId =
-        typeof plan.product === 'string' ? plan.product : plan.product?.id;
+        typeof plan.product === "string" ? plan.product : plan.product?.id;
 
       const tiers: Stripe.PlanCreateParams.Tier[] | undefined = plan.tiers
         ? plan.tiers.map((oldTier) => ({
-            up_to: oldTier.up_to ?? 'inf',
+            up_to: oldTier.up_to ?? "inf",
             flat_amount: oldTier.flat_amount ?? undefined,
             flat_amount_decimal: oldTier.flat_amount_decimal ?? undefined,
             unit_amount: oldTier.unit_amount ?? undefined,
@@ -79,7 +79,7 @@ export const migratePlans = async (oldStripe: Stripe, newStripe: Stripe) => {
       } catch (error) {
         if (
           error instanceof Error &&
-          error.message.includes('already exists')
+          error.message.includes("already exists")
         ) {
           console.log(
             chalk.blue(`Plan ${plan.id} already exists, skipping...`)

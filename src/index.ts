@@ -1,21 +1,21 @@
-import { program } from 'commander';
-import pkg from '../package.json';
-import { migratePlans } from './lib/plans';
-import { migrateCoupons } from './lib/coupons';
-import { migrateSubscriptions } from './lib/subscriptions';
-import { migrateWebhooks } from './lib/webhooks';
-import { migrateProducts } from './lib/products';
-import { createStripeInstances, handleError } from './lib/utils';
+import { program } from "commander";
+import pkg from "../package.json";
+import { migrateCoupons } from "./lib/coupons";
+import { migratePlans } from "./lib/plans";
+import { migrateProducts } from "./lib/products";
+import { migrateSubscriptions } from "./lib/subscriptions";
+import { createStripeInstances, handleError } from "./lib/utils";
+import { migrateWebhooks } from "./lib/webhooks";
 
 program
-  .name('stripe-migrate')
+  .name("stripe-migrate")
   .description(pkg.description)
   .version(pkg.version);
 
 program
-  .command('webhooks')
-  .option('--from <from>', 'Stripe secret key from the old account', undefined)
-  .option('--to <to>', 'Stripe secret key from the new account', undefined)
+  .command("webhooks")
+  .option("--from <from>", "Stripe secret key from the old account", undefined)
+  .option("--to <to>", "Stripe secret key from the new account", undefined)
   .action(async ({ from, to }) => {
     try {
       const { oldStripe, newStripe } = createStripeInstances(from, to);
@@ -26,9 +26,9 @@ program
   });
 
 program
-  .command('products')
-  .option('--from <from>', 'Stripe secret key from the old account', undefined)
-  .option('--to <to>', 'Stripe secret key from the new account', undefined)
+  .command("products")
+  .option("--from <from>", "Stripe secret key from the old account", undefined)
+  .option("--to <to>", "Stripe secret key from the new account", undefined)
   .action(async ({ from, to }) => {
     try {
       const { oldStripe, newStripe } = createStripeInstances(from, to);
@@ -39,9 +39,9 @@ program
   });
 
 program
-  .command('plans')
-  .option('--from <from>', 'Stripe secret key from the old account', undefined)
-  .option('--to <to>', 'Stripe secret key from the new account', undefined)
+  .command("plans")
+  .option("--from <from>", "Stripe secret key from the old account", undefined)
+  .option("--to <to>", "Stripe secret key from the new account", undefined)
   .action(async ({ from, to }) => {
     try {
       const { oldStripe, newStripe } = createStripeInstances(from, to);
@@ -52,9 +52,9 @@ program
   });
 
 program
-  .command('coupons')
-  .option('--from <from>', 'Stripe secret key from the old account', undefined)
-  .option('--to <to>', 'Stripe secret key from the new account', undefined)
+  .command("coupons")
+  .option("--from <from>", "Stripe secret key from the old account", undefined)
+  .option("--to <to>", "Stripe secret key from the new account", undefined)
   .action(async ({ from, to }) => {
     try {
       const { oldStripe, newStripe } = createStripeInstances(from, to);
@@ -65,22 +65,22 @@ program
   });
 
 program
-  .command('subscriptions')
-  .option('--from <from>', 'Stripe secret key from the old account', undefined)
-  .option('--to <to>', 'Stripe secret key from the new account', undefined)
+  .command("subscriptions")
+  .option("--from <from>", "Stripe secret key from the old account", undefined)
+  .option("--to <to>", "Stripe secret key from the new account", undefined)
   .option(
-    '--customerIds <customerIds>',
-    'Only migrate customers with these Customer IDs (comma separated)',
-    ''
+    "--customerIds <customerIds>",
+    "Only migrate customers with these Customer IDs (comma separated)",
+    ""
   )
   .option(
-    '--omitCustomerIds <customerIds>',
-    'Omit customers with these Customer IDs (comma separated)',
-    ''
+    "--omitCustomerIds <customerIds>",
+    "Omit customers with these Customer IDs (comma separated)",
+    ""
   )
   .option(
-    '--dry-run',
-    'Mock customers from the old account and simulate on the new',
+    "--dry-run",
+    "Mock customers from the old account and simulate on the new",
     false
   )
   .action(async ({ from, to, customerIds, omitCustomerIds, dryRun }) => {
@@ -89,8 +89,8 @@ program
       await migrateSubscriptions(
         oldStripe,
         newStripe,
-        customerIds.split(',').filter(Boolean),
-        omitCustomerIds.split(',').filter(Boolean),
+        customerIds.split(",").filter(Boolean),
+        omitCustomerIds.split(",").filter(Boolean),
         dryRun
       );
     } catch (error) {

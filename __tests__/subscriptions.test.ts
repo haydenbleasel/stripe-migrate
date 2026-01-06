@@ -1,21 +1,23 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import crypto from "node:crypto";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
-  getAnonymisedEmail,
-  fetchSubscriptions,
   fetchCustomers,
+  fetchSubscriptions,
+  getAnonymisedEmail,
   migrateSubscriptions,
-} from '../src/lib/subscriptions';
+} from "../src/lib/subscriptions";
 import {
+  createMockCustomer,
+  createMockListResponse,
+  createMockPaymentMethod,
   createMockStripe,
   createMockSubscription,
-  createMockCustomer,
-  createMockPaymentMethod,
-  createMockListResponse,
   mockConsole,
-} from './mocks';
-import crypto from 'node:crypto';
+} from "./mocks";
 
-describe('subscriptions', () => {
+const EXAMPLE_EMAIL_REGEX = /@example\.com$/;
+
+describe("subscriptions", () => {
   let consoleSpy: ReturnType<typeof mockConsole>;
 
   beforeEach(() => {
@@ -26,62 +28,55 @@ describe('subscriptions', () => {
     vi.restoreAllMocks();
   });
 
-  describe('getAnonymisedEmail', () => {
-    it('should return MD5 hash of email with @example.com domain', () => {
-      const email = 'test@test.com';
-      const expectedHash = crypto
-        .createHash('md5')
-        .update(email)
-        .digest('hex');
+  describe("getAnonymisedEmail", () => {
+    it("should return MD5 hash of email with @example.com domain", () => {
+      const email = "test@test.com";
+      const expectedHash = crypto.createHash("md5").update(email).digest("hex");
       const result = getAnonymisedEmail(email);
 
       expect(result).toBe(`${expectedHash}@example.com`);
     });
 
-    it('should return consistent hash for same email', () => {
-      const email = 'consistent@test.com';
+    it("should return consistent hash for same email", () => {
+      const email = "consistent@test.com";
       const result1 = getAnonymisedEmail(email);
       const result2 = getAnonymisedEmail(email);
 
       expect(result1).toBe(result2);
     });
 
-    it('should return different hashes for different emails', () => {
-      const result1 = getAnonymisedEmail('email1@test.com');
-      const result2 = getAnonymisedEmail('email2@test.com');
+    it("should return different hashes for different emails", () => {
+      const result1 = getAnonymisedEmail("email1@test.com");
+      const result2 = getAnonymisedEmail("email2@test.com");
 
       expect(result1).not.toBe(result2);
     });
 
-    it('should always end with @example.com', () => {
-      const emails = [
-        'test@gmail.com',
-        'user@company.org',
-        'admin@site.io',
-      ];
+    it("should always end with @example.com", () => {
+      const emails = ["test@gmail.com", "user@company.org", "admin@site.io"];
 
-      emails.forEach((email) => {
-        expect(getAnonymisedEmail(email)).toMatch(/@example\.com$/);
-      });
+      for (const email of emails) {
+        expect(getAnonymisedEmail(email)).toMatch(EXAMPLE_EMAIL_REGEX);
+      }
     });
 
-    it('should handle empty string', () => {
-      const result = getAnonymisedEmail('');
-      const expectedHash = crypto.createHash('md5').update('').digest('hex');
+    it("should handle empty string", () => {
+      const result = getAnonymisedEmail("");
+      const expectedHash = crypto.createHash("md5").update("").digest("hex");
 
       expect(result).toBe(`${expectedHash}@example.com`);
     });
   });
 
-  describe('fetchSubscriptions', () => {
+  describe("fetchSubscriptions", () => {
     let mockStripe: ReturnType<typeof createMockStripe>;
 
     beforeEach(() => {
       mockStripe = createMockStripe();
     });
 
-    it('should fetch all subscriptions from a single page', async () => {
-      const subscriptions = [createMockSubscription({ id: 'sub_1' })];
+    it("should fetch all subscriptions from a single page", async () => {
+      const subscriptions = [createMockSubscription({ id: "sub_1" })];
       mockStripe.subscriptions.list.mockResolvedValue(
         createMockListResponse(subscriptions)
       );
@@ -92,21 +87,19 @@ describe('subscriptions', () => {
       expect(mockStripe.subscriptions.list).toHaveBeenCalledTimes(1);
       expect(mockStripe.subscriptions.list).toHaveBeenCalledWith({
         limit: 100,
-        expand: ['data.customer', 'data.default_payment_method'],
+        expand: ["data.customer", "data.default_payment_method"],
       });
     });
 
-    it('should paginate through multiple pages', async () => {
+    it("should paginate through multiple pages", async () => {
       const page1Subscriptions = [
-        createMockSubscription({ id: 'sub_1' }),
-        createMockSubscription({ id: 'sub_2' }),
+        createMockSubscription({ id: "sub_1" }),
+        createMockSubscription({ id: "sub_2" }),
       ];
-      const page2Subscriptions = [createMockSubscription({ id: 'sub_3' })];
+      const page2Subscriptions = [createMockSubscription({ id: "sub_3" })];
 
       mockStripe.subscriptions.list
-        .mockResolvedValueOnce(
-          createMockListResponse(page1Subscriptions, true)
-        )
+        .mockResolvedValueOnce(createMockListResponse(page1Subscriptions, true))
         .mockResolvedValueOnce(
           createMockListResponse(page2Subscriptions, false)
         );
@@ -117,7 +110,7 @@ describe('subscriptions', () => {
       expect(mockStripe.subscriptions.list).toHaveBeenCalledTimes(2);
     });
 
-    it('should handle empty subscription list', async () => {
+    it("should handle empty subscription list", async () => {
       mockStripe.subscriptions.list.mockResolvedValue(
         createMockListResponse([])
       );
@@ -127,10 +120,10 @@ describe('subscriptions', () => {
       expect(result).toEqual([]);
     });
 
-    it('should log the number of fetched subscriptions', async () => {
+    it("should log the number of fetched subscriptions", async () => {
       const subscriptions = [
-        createMockSubscription({ id: 'sub_1' }),
-        createMockSubscription({ id: 'sub_2' }),
+        createMockSubscription({ id: "sub_1" }),
+        createMockSubscription({ id: "sub_2" }),
       ];
       mockStripe.subscriptions.list.mockResolvedValue(
         createMockListResponse(subscriptions)
@@ -139,20 +132,20 @@ describe('subscriptions', () => {
       await fetchSubscriptions(mockStripe);
 
       expect(consoleSpy.log).toHaveBeenCalledWith(
-        expect.stringContaining('2 subscriptions')
+        expect.stringContaining("2 subscriptions")
       );
     });
   });
 
-  describe('fetchCustomers', () => {
+  describe("fetchCustomers", () => {
     let mockStripe: ReturnType<typeof createMockStripe>;
 
     beforeEach(() => {
       mockStripe = createMockStripe();
     });
 
-    it('should fetch all customers from a single page', async () => {
-      const customers = [createMockCustomer({ id: 'cus_1' })];
+    it("should fetch all customers from a single page", async () => {
+      const customers = [createMockCustomer({ id: "cus_1" })];
       mockStripe.customers.list.mockResolvedValue(
         createMockListResponse(customers)
       );
@@ -164,12 +157,12 @@ describe('subscriptions', () => {
       expect(mockStripe.customers.list).toHaveBeenCalledWith({ limit: 100 });
     });
 
-    it('should paginate through multiple pages', async () => {
+    it("should paginate through multiple pages", async () => {
       const page1Customers = [
-        createMockCustomer({ id: 'cus_1' }),
-        createMockCustomer({ id: 'cus_2' }),
+        createMockCustomer({ id: "cus_1" }),
+        createMockCustomer({ id: "cus_2" }),
       ];
-      const page2Customers = [createMockCustomer({ id: 'cus_3' })];
+      const page2Customers = [createMockCustomer({ id: "cus_3" })];
 
       mockStripe.customers.list
         .mockResolvedValueOnce(createMockListResponse(page1Customers, true))
@@ -181,7 +174,7 @@ describe('subscriptions', () => {
       expect(mockStripe.customers.list).toHaveBeenCalledTimes(2);
     });
 
-    it('should handle empty customer list', async () => {
+    it("should handle empty customer list", async () => {
       mockStripe.customers.list.mockResolvedValue(createMockListResponse([]));
 
       const result = await fetchCustomers(mockStripe);
@@ -189,8 +182,8 @@ describe('subscriptions', () => {
       expect(result).toEqual([]);
     });
 
-    it('should log the number of fetched customers', async () => {
-      const customers = [createMockCustomer({ id: 'cus_1' })];
+    it("should log the number of fetched customers", async () => {
+      const customers = [createMockCustomer({ id: "cus_1" })];
       mockStripe.customers.list.mockResolvedValue(
         createMockListResponse(customers)
       );
@@ -198,12 +191,12 @@ describe('subscriptions', () => {
       await fetchCustomers(mockStripe);
 
       expect(consoleSpy.log).toHaveBeenCalledWith(
-        expect.stringContaining('1 customers')
+        expect.stringContaining("1 customers")
       );
     });
   });
 
-  describe('migrateSubscriptions', () => {
+  describe("migrateSubscriptions", () => {
     let oldStripe: ReturnType<typeof createMockStripe>;
     let newStripe: ReturnType<typeof createMockStripe>;
 
@@ -212,13 +205,13 @@ describe('subscriptions', () => {
       newStripe = createMockStripe();
     });
 
-    it('should filter deleted customers', async () => {
+    it("should filter deleted customers", async () => {
       const customers = [
-        createMockCustomer({ id: 'cus_active', deleted: undefined }),
+        createMockCustomer({ id: "cus_active", deleted: undefined }),
         createMockCustomer({
-          id: 'cus_deleted',
+          id: "cus_deleted",
           deleted: true,
-        } as unknown as Partial<import('stripe').Stripe.Customer>),
+        } as unknown as Partial<import("stripe").Stripe.Customer>),
       ];
       oldStripe.customers.list.mockResolvedValue(
         createMockListResponse(customers)
@@ -230,15 +223,15 @@ describe('subscriptions', () => {
       await migrateSubscriptions(oldStripe, newStripe, [], [], false);
 
       expect(consoleSpy.log).toHaveBeenCalledWith(
-        expect.stringContaining('1 customers')
+        expect.stringContaining("1 customers")
       );
     });
 
-    it('should filter customers by customerIds when provided', async () => {
+    it("should filter customers by customerIds when provided", async () => {
       const customers = [
-        createMockCustomer({ id: 'cus_1' }),
-        createMockCustomer({ id: 'cus_2' }),
-        createMockCustomer({ id: 'cus_3' }),
+        createMockCustomer({ id: "cus_1" }),
+        createMockCustomer({ id: "cus_2" }),
+        createMockCustomer({ id: "cus_3" }),
       ];
       oldStripe.customers.list.mockResolvedValue(
         createMockListResponse(customers)
@@ -250,21 +243,21 @@ describe('subscriptions', () => {
       await migrateSubscriptions(
         oldStripe,
         newStripe,
-        ['cus_1', 'cus_2'],
+        ["cus_1", "cus_2"],
         [],
         false
       );
 
       expect(consoleSpy.log).toHaveBeenCalledWith(
-        expect.stringContaining('only include 2 customer ids')
+        expect.stringContaining("only include 2 customer ids")
       );
     });
 
-    it('should omit customers by omitCustomerIds when provided', async () => {
+    it("should omit customers by omitCustomerIds when provided", async () => {
       const customers = [
-        createMockCustomer({ id: 'cus_1' }),
-        createMockCustomer({ id: 'cus_2' }),
-        createMockCustomer({ id: 'cus_3' }),
+        createMockCustomer({ id: "cus_1" }),
+        createMockCustomer({ id: "cus_2" }),
+        createMockCustomer({ id: "cus_3" }),
       ];
       oldStripe.customers.list.mockResolvedValue(
         createMockListResponse(customers)
@@ -273,36 +266,30 @@ describe('subscriptions', () => {
         createMockListResponse([])
       );
 
-      await migrateSubscriptions(
-        oldStripe,
-        newStripe,
-        [],
-        ['cus_3'],
-        false
-      );
+      await migrateSubscriptions(oldStripe, newStripe, [], ["cus_3"], false);
 
       expect(consoleSpy.log).toHaveBeenCalledWith(
-        expect.stringContaining('omit 1 customer ids')
+        expect.stringContaining("omit 1 customer ids")
       );
     });
 
-    it('should only migrate active subscriptions', async () => {
-      const customer = createMockCustomer({ id: 'cus_test' });
+    it("should only migrate active subscriptions", async () => {
+      const customer = createMockCustomer({ id: "cus_test" });
       const subscriptions = [
         createMockSubscription({
-          id: 'sub_active',
-          status: 'active',
-          customer: 'cus_test',
+          id: "sub_active",
+          status: "active",
+          customer: "cus_test",
         }),
         createMockSubscription({
-          id: 'sub_canceled',
-          status: 'canceled',
-          customer: 'cus_test',
+          id: "sub_canceled",
+          status: "canceled",
+          customer: "cus_test",
         }),
         createMockSubscription({
-          id: 'sub_past_due',
-          status: 'past_due',
-          customer: 'cus_test',
+          id: "sub_past_due",
+          status: "past_due",
+          customer: "cus_test",
         }),
       ];
       oldStripe.customers.list.mockResolvedValue(
@@ -315,7 +302,7 @@ describe('subscriptions', () => {
         createMockListResponse([createMockPaymentMethod()])
       );
       newStripe.subscriptions.create.mockResolvedValue(
-        createMockSubscription({ id: 'sub_new' })
+        createMockSubscription({ id: "sub_new" })
       );
 
       await migrateSubscriptions(oldStripe, newStripe, [], [], false);
@@ -323,21 +310,21 @@ describe('subscriptions', () => {
       expect(newStripe.subscriptions.create).toHaveBeenCalledTimes(1);
     });
 
-    it('should only migrate subscriptions for specified customers', async () => {
+    it("should only migrate subscriptions for specified customers", async () => {
       const customers = [
-        createMockCustomer({ id: 'cus_1' }),
-        createMockCustomer({ id: 'cus_2' }),
+        createMockCustomer({ id: "cus_1" }),
+        createMockCustomer({ id: "cus_2" }),
       ];
       const subscriptions = [
         createMockSubscription({
-          id: 'sub_1',
-          customer: 'cus_1',
-          status: 'active',
+          id: "sub_1",
+          customer: "cus_1",
+          status: "active",
         }),
         createMockSubscription({
-          id: 'sub_2',
-          customer: 'cus_2',
-          status: 'active',
+          id: "sub_2",
+          customer: "cus_2",
+          status: "active",
         }),
       ];
       oldStripe.customers.list.mockResolvedValue(
@@ -350,27 +337,21 @@ describe('subscriptions', () => {
         createMockListResponse([createMockPaymentMethod()])
       );
       newStripe.subscriptions.create.mockResolvedValue(
-        createMockSubscription({ id: 'sub_new' })
+        createMockSubscription({ id: "sub_new" })
       );
 
-      await migrateSubscriptions(
-        oldStripe,
-        newStripe,
-        ['cus_1'],
-        [],
-        false
-      );
+      await migrateSubscriptions(oldStripe, newStripe, ["cus_1"], [], false);
 
       expect(newStripe.subscriptions.create).toHaveBeenCalledTimes(1);
       expect(newStripe.subscriptions.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          customer: 'cus_1',
+          customer: "cus_1",
         })
       );
     });
 
-    it('should throw error when customer in customerIds is not found', async () => {
-      const customers = [createMockCustomer({ id: 'cus_1' })];
+    it("should throw error when customer in customerIds is not found", async () => {
+      const customers = [createMockCustomer({ id: "cus_1" })];
       oldStripe.customers.list.mockResolvedValue(
         createMockListResponse(customers)
       );
@@ -382,20 +363,20 @@ describe('subscriptions', () => {
         migrateSubscriptions(
           oldStripe,
           newStripe,
-          ['cus_nonexistent'],
+          ["cus_nonexistent"],
           [],
           false
         )
-      ).rejects.toThrow('Failed to find customer cus_nonexistent');
+      ).rejects.toThrow("Failed to find customer cus_nonexistent");
     });
 
-    it('should set trial_end to current_period_end', async () => {
-      const periodEnd = Math.floor(Date.now() / 1000) + 86400 * 30;
-      const customer = createMockCustomer({ id: 'cus_test' });
+    it("should set trial_end to current_period_end", async () => {
+      const periodEnd = Math.floor(Date.now() / 1000) + 86_400 * 30;
+      const customer = createMockCustomer({ id: "cus_test" });
       const subscription = createMockSubscription({
-        id: 'sub_test',
-        customer: 'cus_test',
-        status: 'active',
+        id: "sub_test",
+        customer: "cus_test",
+        status: "active",
         current_period_end: periodEnd,
       });
       oldStripe.customers.list.mockResolvedValue(
@@ -408,7 +389,7 @@ describe('subscriptions', () => {
         createMockListResponse([createMockPaymentMethod()])
       );
       newStripe.subscriptions.create.mockResolvedValue(
-        createMockSubscription({ id: 'sub_new' })
+        createMockSubscription({ id: "sub_new" })
       );
 
       await migrateSubscriptions(oldStripe, newStripe, [], [], false);
@@ -420,12 +401,12 @@ describe('subscriptions', () => {
       );
     });
 
-    it('should return subscription ID mapping', async () => {
-      const customer = createMockCustomer({ id: 'cus_test' });
+    it("should return subscription ID mapping", async () => {
+      const customer = createMockCustomer({ id: "cus_test" });
       const subscription = createMockSubscription({
-        id: 'sub_old',
-        customer: 'cus_test',
-        status: 'active',
+        id: "sub_old",
+        customer: "cus_test",
+        status: "active",
       });
       oldStripe.customers.list.mockResolvedValue(
         createMockListResponse([customer])
@@ -437,7 +418,7 @@ describe('subscriptions', () => {
         createMockListResponse([createMockPaymentMethod()])
       );
       newStripe.subscriptions.create.mockResolvedValue(
-        createMockSubscription({ id: 'sub_new' })
+        createMockSubscription({ id: "sub_new" })
       );
 
       const result = await migrateSubscriptions(
@@ -448,15 +429,15 @@ describe('subscriptions', () => {
         false
       );
 
-      expect(result).toEqual({ sub_old: 'sub_new' });
+      expect(result).toEqual({ sub_old: "sub_new" });
     });
 
-    it('should throw error when no payment method found on customer', async () => {
-      const customer = createMockCustomer({ id: 'cus_test' });
+    it("should throw error when no payment method found on customer", async () => {
+      const customer = createMockCustomer({ id: "cus_test" });
       const subscription = createMockSubscription({
-        id: 'sub_test',
-        customer: 'cus_test',
-        status: 'active',
+        id: "sub_test",
+        customer: "cus_test",
+        status: "active",
       });
       oldStripe.customers.list.mockResolvedValue(
         createMockListResponse([customer])
@@ -470,15 +451,15 @@ describe('subscriptions', () => {
 
       await expect(
         migrateSubscriptions(oldStripe, newStripe, [], [], false)
-      ).rejects.toThrow('Failed to find payment method on customer');
+      ).rejects.toThrow("Failed to find payment method on customer");
     });
 
-    describe('dry-run mode', () => {
-      it('should create mock customers with anonymized emails', async () => {
+    describe("dry-run mode", () => {
+      it("should create mock customers with anonymized emails", async () => {
         const customer = createMockCustomer({
-          id: 'cus_test',
-          email: 'real@email.com',
-          name: 'Test User',
+          id: "cus_test",
+          email: "real@email.com",
+          name: "Test User",
         });
         oldStripe.customers.list.mockResolvedValue(
           createMockListResponse([customer])
@@ -488,8 +469,8 @@ describe('subscriptions', () => {
         );
         newStripe.customers.create.mockResolvedValue(
           createMockCustomer({
-            id: 'cus_mock',
-            email: getAnonymisedEmail('real@email.com'),
+            id: "cus_mock",
+            email: getAnonymisedEmail("real@email.com"),
           })
         );
 
@@ -497,14 +478,14 @@ describe('subscriptions', () => {
 
         expect(newStripe.customers.create).toHaveBeenCalledWith(
           expect.objectContaining({
-            email: getAnonymisedEmail('real@email.com'),
-            name: 'Test User',
-            payment_method: 'pm_card_visa',
+            email: getAnonymisedEmail("real@email.com"),
+            name: "Test User",
+            payment_method: "pm_card_visa",
           })
         );
       });
 
-      it('should limit to 20 random customers in dry-run without customerIds', async () => {
+      it("should limit to 20 random customers in dry-run without customerIds", async () => {
         const customers = Array.from({ length: 30 }, (_, i) =>
           createMockCustomer({ id: `cus_${i}`, email: `user${i}@test.com` })
         );
@@ -515,7 +496,7 @@ describe('subscriptions', () => {
           createMockListResponse([])
         );
         newStripe.customers.create.mockResolvedValue(
-          createMockCustomer({ id: 'cus_mock' })
+          createMockCustomer({ id: "cus_mock" })
         );
 
         await migrateSubscriptions(oldStripe, newStripe, [], [], true);
@@ -523,7 +504,7 @@ describe('subscriptions', () => {
         expect(newStripe.customers.create).toHaveBeenCalledTimes(20);
       });
 
-      it('should not limit customers in dry-run when customerIds provided', async () => {
+      it("should not limit customers in dry-run when customerIds provided", async () => {
         const customerIds = Array.from({ length: 25 }, (_, i) => `cus_${i}`);
         const customers = customerIds.map((id) =>
           createMockCustomer({ id, email: `${id}@test.com` })
@@ -535,25 +516,19 @@ describe('subscriptions', () => {
           createMockListResponse([])
         );
         newStripe.customers.create.mockResolvedValue(
-          createMockCustomer({ id: 'cus_mock' })
+          createMockCustomer({ id: "cus_mock" })
         );
 
-        await migrateSubscriptions(
-          oldStripe,
-          newStripe,
-          customerIds,
-          [],
-          true
-        );
+        await migrateSubscriptions(oldStripe, newStripe, customerIds, [], true);
 
         expect(newStripe.customers.create).toHaveBeenCalledTimes(25);
       });
 
-      it('should handle customer with null email in dry-run', async () => {
+      it("should handle customer with null email in dry-run", async () => {
         const customer = createMockCustomer({
-          id: 'cus_test',
+          id: "cus_test",
           email: null,
-          name: 'No Email User',
+          name: "No Email User",
         });
         oldStripe.customers.list.mockResolvedValue(
           createMockListResponse([customer])
@@ -562,7 +537,7 @@ describe('subscriptions', () => {
           createMockListResponse([])
         );
         newStripe.customers.create.mockResolvedValue(
-          createMockCustomer({ id: 'cus_mock', email: null })
+          createMockCustomer({ id: "cus_mock", email: null })
         );
 
         await migrateSubscriptions(oldStripe, newStripe, [], [], true);
@@ -570,26 +545,26 @@ describe('subscriptions', () => {
         expect(newStripe.customers.create).toHaveBeenCalledWith(
           expect.objectContaining({
             email: undefined,
-            name: 'No Email User',
+            name: "No Email User",
           })
         );
       });
 
-      it('should use mock customer payment method for subscription', async () => {
+      it("should use mock customer payment method for subscription", async () => {
         const customer = createMockCustomer({
-          id: 'cus_old',
-          email: 'test@test.com',
+          id: "cus_old",
+          email: "test@test.com",
         });
         const subscription = createMockSubscription({
-          id: 'sub_old',
-          customer: customer,
-          status: 'active',
+          id: "sub_old",
+          customer,
+          status: "active",
         });
         const mockCustomer = createMockCustomer({
-          id: 'cus_mock',
-          email: getAnonymisedEmail('test@test.com'),
+          id: "cus_mock",
+          email: getAnonymisedEmail("test@test.com"),
         });
-        const mockPaymentMethod = createMockPaymentMethod({ id: 'pm_mock' });
+        const mockPaymentMethod = createMockPaymentMethod({ id: "pm_mock" });
 
         oldStripe.customers.list.mockResolvedValue(
           createMockListResponse([customer])
@@ -602,33 +577,33 @@ describe('subscriptions', () => {
           createMockListResponse([mockPaymentMethod])
         );
         newStripe.subscriptions.create.mockResolvedValue(
-          createMockSubscription({ id: 'sub_new' })
+          createMockSubscription({ id: "sub_new" })
         );
 
         await migrateSubscriptions(oldStripe, newStripe, [], [], true);
 
         expect(newStripe.subscriptions.create).toHaveBeenCalledWith(
           expect.objectContaining({
-            customer: 'cus_mock',
-            default_payment_method: 'pm_mock',
+            customer: "cus_mock",
+            default_payment_method: "pm_mock",
           })
         );
       });
 
-      it('should disable automatic_tax in dry-run mode', async () => {
+      it("should disable automatic_tax in dry-run mode", async () => {
         const customer = createMockCustomer({
-          id: 'cus_old',
-          email: 'test@test.com',
+          id: "cus_old",
+          email: "test@test.com",
         });
         const subscription = createMockSubscription({
-          id: 'sub_old',
-          customer: customer,
-          status: 'active',
+          id: "sub_old",
+          customer,
+          status: "active",
           automatic_tax: { enabled: true, liability: null },
         });
         const mockCustomer = createMockCustomer({
-          id: 'cus_mock',
-          email: getAnonymisedEmail('test@test.com'),
+          id: "cus_mock",
+          email: getAnonymisedEmail("test@test.com"),
         });
 
         oldStripe.customers.list.mockResolvedValue(
@@ -639,10 +614,10 @@ describe('subscriptions', () => {
         );
         newStripe.customers.create.mockResolvedValue(mockCustomer);
         newStripe.paymentMethods.list.mockResolvedValue(
-          createMockListResponse([createMockPaymentMethod({ id: 'pm_mock' })])
+          createMockListResponse([createMockPaymentMethod({ id: "pm_mock" })])
         );
         newStripe.subscriptions.create.mockResolvedValue(
-          createMockSubscription({ id: 'sub_new' })
+          createMockSubscription({ id: "sub_new" })
         );
 
         await migrateSubscriptions(oldStripe, newStripe, [], [], true);
@@ -655,16 +630,16 @@ describe('subscriptions', () => {
       });
     });
 
-    describe('subscription property transformations', () => {
+    describe("subscription property transformations", () => {
       let customer: ReturnType<typeof createMockCustomer>;
       let baseSubscription: ReturnType<typeof createMockSubscription>;
 
       beforeEach(() => {
-        customer = createMockCustomer({ id: 'cus_test' });
+        customer = createMockCustomer({ id: "cus_test" });
         baseSubscription = createMockSubscription({
-          id: 'sub_test',
-          customer: 'cus_test',
-          status: 'active',
+          id: "sub_test",
+          customer: "cus_test",
+          status: "active",
         });
         oldStripe.customers.list.mockResolvedValue(
           createMockListResponse([customer])
@@ -673,11 +648,11 @@ describe('subscriptions', () => {
           createMockListResponse([createMockPaymentMethod()])
         );
         newStripe.subscriptions.create.mockResolvedValue(
-          createMockSubscription({ id: 'sub_new' })
+          createMockSubscription({ id: "sub_new" })
         );
       });
 
-      it('should handle customer as object', async () => {
+      it("should handle customer as object", async () => {
         const subscription = createMockSubscription({
           ...baseSubscription,
           customer: customer as unknown as string,
@@ -690,12 +665,12 @@ describe('subscriptions', () => {
 
         expect(newStripe.subscriptions.create).toHaveBeenCalledWith(
           expect.objectContaining({
-            customer: 'cus_test',
+            customer: "cus_test",
           })
         );
       });
 
-      it('should transform billing_thresholds', async () => {
+      it("should transform billing_thresholds", async () => {
         const subscription = createMockSubscription({
           ...baseSubscription,
           billing_thresholds: {
@@ -719,12 +694,12 @@ describe('subscriptions', () => {
         );
       });
 
-      it('should transform default_tax_rates', async () => {
+      it("should transform default_tax_rates", async () => {
         const subscription = createMockSubscription({
           ...baseSubscription,
           default_tax_rates: [
-            { id: 'txr_1' } as unknown as import('stripe').Stripe.TaxRate,
-            { id: 'txr_2' } as unknown as import('stripe').Stripe.TaxRate,
+            { id: "txr_1" } as unknown as import("stripe").Stripe.TaxRate,
+            { id: "txr_2" } as unknown as import("stripe").Stripe.TaxRate,
           ],
         });
         oldStripe.subscriptions.list.mockResolvedValue(
@@ -735,26 +710,26 @@ describe('subscriptions', () => {
 
         expect(newStripe.subscriptions.create).toHaveBeenCalledWith(
           expect.objectContaining({
-            default_tax_rates: ['txr_1', 'txr_2'],
+            default_tax_rates: ["txr_1", "txr_2"],
           })
         );
       });
 
-      it('should use promotion_code when no coupon is set', async () => {
+      it("should use promotion_code when no coupon is set", async () => {
         const subscription = createMockSubscription({
           ...baseSubscription,
           discount: {
-            id: 'di_test',
-            object: 'discount',
+            id: "di_test",
+            object: "discount",
             checkout_session: null,
-            coupon: null as unknown as import('stripe').Stripe.Coupon,
-            customer: 'cus_test',
+            coupon: null as unknown as import("stripe").Stripe.Coupon,
+            customer: "cus_test",
             end: null,
             invoice: null,
             invoice_item: null,
-            promotion_code: 'promo_123',
-            start: 1234567890,
-            subscription: 'sub_test',
+            promotion_code: "promo_123",
+            start: 1_234_567_890,
+            subscription: "sub_test",
             subscription_item: null,
           },
         });
@@ -766,29 +741,29 @@ describe('subscriptions', () => {
 
         expect(newStripe.subscriptions.create).toHaveBeenCalledWith(
           expect.objectContaining({
-            promotion_code: 'promo_123',
+            promotion_code: "promo_123",
             coupon: undefined,
           })
         );
       });
 
-      it('should use coupon instead of promotion_code when coupon is set', async () => {
+      it("should use coupon instead of promotion_code when coupon is set", async () => {
         const subscription = createMockSubscription({
           ...baseSubscription,
           discount: {
-            id: 'di_test',
-            object: 'discount',
+            id: "di_test",
+            object: "discount",
             checkout_session: null,
             coupon: {
-              id: 'coupon_123',
-            } as import('stripe').Stripe.Coupon,
-            customer: 'cus_test',
+              id: "coupon_123",
+            } as import("stripe").Stripe.Coupon,
+            customer: "cus_test",
             end: null,
             invoice: null,
             invoice_item: null,
-            promotion_code: 'promo_123',
-            start: 1234567890,
-            subscription: 'sub_test',
+            promotion_code: "promo_123",
+            start: 1_234_567_890,
+            subscription: "sub_test",
             subscription_item: null,
           },
         });
@@ -801,13 +776,13 @@ describe('subscriptions', () => {
         expect(newStripe.subscriptions.create).toHaveBeenCalledWith(
           expect.objectContaining({
             promotion_code: undefined,
-            coupon: 'coupon_123',
+            coupon: "coupon_123",
           })
         );
       });
 
-      it('should clear cancel_at when cancel_at_period_end is true', async () => {
-        const futureTimestamp = Math.floor(Date.now() / 1000) + 86400;
+      it("should clear cancel_at when cancel_at_period_end is true", async () => {
+        const futureTimestamp = Math.floor(Date.now() / 1000) + 86_400;
         const subscription = createMockSubscription({
           ...baseSubscription,
           cancel_at: futureTimestamp,
@@ -827,8 +802,8 @@ describe('subscriptions', () => {
         );
       });
 
-      it('should preserve cancel_at when cancel_at_period_end is false', async () => {
-        const futureTimestamp = Math.floor(Date.now() / 1000) + 86400;
+      it("should preserve cancel_at when cancel_at_period_end is false", async () => {
+        const futureTimestamp = Math.floor(Date.now() / 1000) + 86_400;
         const subscription = createMockSubscription({
           ...baseSubscription,
           cancel_at: futureTimestamp,
@@ -848,10 +823,10 @@ describe('subscriptions', () => {
         );
       });
 
-      it('should handle on_behalf_of as object', async () => {
+      it("should handle on_behalf_of as object", async () => {
         const subscription = createMockSubscription({
           ...baseSubscription,
-          on_behalf_of: { id: 'acct_123' } as unknown as string,
+          on_behalf_of: { id: "acct_123" } as unknown as string,
         });
         oldStripe.subscriptions.list.mockResolvedValue(
           createMockListResponse([subscription])
@@ -861,16 +836,16 @@ describe('subscriptions', () => {
 
         expect(newStripe.subscriptions.create).toHaveBeenCalledWith(
           expect.objectContaining({
-            on_behalf_of: 'acct_123',
+            on_behalf_of: "acct_123",
           })
         );
       });
 
-      it('should transform transfer_data with destination as object', async () => {
+      it("should transform transfer_data with destination as object", async () => {
         const subscription = createMockSubscription({
           ...baseSubscription,
           transfer_data: {
-            destination: { id: 'acct_dest' } as unknown as string,
+            destination: { id: "acct_dest" } as unknown as string,
             amount_percent: 80,
           },
         });
@@ -883,17 +858,17 @@ describe('subscriptions', () => {
         expect(newStripe.subscriptions.create).toHaveBeenCalledWith(
           expect.objectContaining({
             transfer_data: {
-              destination: 'acct_dest',
+              destination: "acct_dest",
               amount_percent: 80,
             },
           })
         );
       });
 
-      it('should handle default_source as object', async () => {
+      it("should handle default_source as object", async () => {
         const subscription = createMockSubscription({
           ...baseSubscription,
-          default_source: { id: 'src_123' } as unknown as string,
+          default_source: { id: "src_123" } as unknown as string,
         });
         oldStripe.subscriptions.list.mockResolvedValue(
           createMockListResponse([subscription])
@@ -903,18 +878,18 @@ describe('subscriptions', () => {
 
         expect(newStripe.subscriptions.create).toHaveBeenCalledWith(
           expect.objectContaining({
-            default_source: 'src_123',
+            default_source: "src_123",
           })
         );
       });
     });
 
-    it('should log subscription mapping when subscriptions are created', async () => {
-      const customer = createMockCustomer({ id: 'cus_test' });
+    it("should log subscription mapping when subscriptions are created", async () => {
+      const customer = createMockCustomer({ id: "cus_test" });
       const subscription = createMockSubscription({
-        id: 'sub_old',
-        customer: 'cus_test',
-        status: 'active',
+        id: "sub_old",
+        customer: "cus_test",
+        status: "active",
       });
       oldStripe.customers.list.mockResolvedValue(
         createMockListResponse([customer])
@@ -926,18 +901,18 @@ describe('subscriptions', () => {
         createMockListResponse([createMockPaymentMethod()])
       );
       newStripe.subscriptions.create.mockResolvedValue(
-        createMockSubscription({ id: 'sub_new' })
+        createMockSubscription({ id: "sub_new" })
       );
 
       await migrateSubscriptions(oldStripe, newStripe, [], [], false);
 
       expect(consoleSpy.log).toHaveBeenCalledWith(
-        expect.stringContaining('Subscription ID mapping')
+        expect.stringContaining("Subscription ID mapping")
       );
     });
 
-    it('should return empty mapping when no subscriptions are migrated', async () => {
-      const customer = createMockCustomer({ id: 'cus_test' });
+    it("should return empty mapping when no subscriptions are migrated", async () => {
+      const customer = createMockCustomer({ id: "cus_test" });
       oldStripe.customers.list.mockResolvedValue(
         createMockListResponse([customer])
       );

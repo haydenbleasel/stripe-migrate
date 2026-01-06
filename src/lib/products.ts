@@ -1,11 +1,11 @@
-import chalk from 'chalk';
-import Stripe from 'stripe';
+import chalk from "chalk";
+import type Stripe from "stripe";
 
 export const fetchProducts = async (stripe: Stripe) => {
-  const products = [];
+  const products: Stripe.Product[] = [];
 
-  let startingAfter: Stripe.Product['id'] = '';
-  let hasMoreProducts: boolean = true;
+  let startingAfter: Stripe.Product["id"] = "";
+  let hasMoreProducts = true;
 
   while (hasMoreProducts) {
     const listParams: Stripe.ProductListParams = { limit: 100 };
@@ -19,7 +19,7 @@ export const fetchProducts = async (stripe: Stripe) => {
     products.push(...response.data);
 
     if (response.has_more && response.data.length > 0) {
-      startingAfter = response.data[response.data.length - 1].id;
+      startingAfter = response.data.at(-1)?.id ?? "";
     } else {
       hasMoreProducts = false;
     }
@@ -40,7 +40,7 @@ export const migrateProducts = async (oldStripe: Stripe, newStripe: Stripe) => {
     .filter((product) => product.active)
     .map(async (product) => {
       const tax_code =
-        typeof product.tax_code === 'string'
+        typeof product.tax_code === "string"
           ? product.tax_code
           : product.tax_code?.id;
 
@@ -74,7 +74,7 @@ export const migrateProducts = async (oldStripe: Stripe, newStripe: Stripe) => {
       } catch (error) {
         if (
           error instanceof Error &&
-          error.message.includes('already exists')
+          error.message.includes("already exists")
         ) {
           console.log(
             chalk.blue(`Product ${product.id} already exists, skipping...`)

@@ -1,13 +1,13 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { fetchCoupons, migrateCoupons } from '../src/lib/coupons';
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { fetchCoupons, migrateCoupons } from "../src/lib/coupons";
 import {
-  createMockStripe,
   createMockCoupon,
   createMockListResponse,
+  createMockStripe,
   mockConsole,
-} from './mocks';
+} from "./mocks";
 
-describe('coupons', () => {
+describe("coupons", () => {
   let mockStripe: ReturnType<typeof createMockStripe>;
   let consoleSpy: ReturnType<typeof mockConsole>;
 
@@ -20,9 +20,9 @@ describe('coupons', () => {
     vi.restoreAllMocks();
   });
 
-  describe('fetchCoupons', () => {
-    it('should fetch all coupons from a single page', async () => {
-      const coupons = [createMockCoupon({ id: 'coupon_1' })];
+  describe("fetchCoupons", () => {
+    it("should fetch all coupons from a single page", async () => {
+      const coupons = [createMockCoupon({ id: "coupon_1" })];
       mockStripe.coupons.list.mockResolvedValue(
         createMockListResponse(coupons)
       );
@@ -34,12 +34,12 @@ describe('coupons', () => {
       expect(mockStripe.coupons.list).toHaveBeenCalledWith({ limit: 100 });
     });
 
-    it('should paginate through multiple pages', async () => {
+    it("should paginate through multiple pages", async () => {
       const page1Coupons = [
-        createMockCoupon({ id: 'coupon_1' }),
-        createMockCoupon({ id: 'coupon_2' }),
+        createMockCoupon({ id: "coupon_1" }),
+        createMockCoupon({ id: "coupon_2" }),
       ];
-      const page2Coupons = [createMockCoupon({ id: 'coupon_3' })];
+      const page2Coupons = [createMockCoupon({ id: "coupon_3" })];
 
       mockStripe.coupons.list
         .mockResolvedValueOnce(createMockListResponse(page1Coupons, true))
@@ -51,11 +51,11 @@ describe('coupons', () => {
       expect(mockStripe.coupons.list).toHaveBeenCalledTimes(2);
       expect(mockStripe.coupons.list).toHaveBeenNthCalledWith(2, {
         limit: 100,
-        starting_after: 'coupon_2',
+        starting_after: "coupon_2",
       });
     });
 
-    it('should handle empty coupon list', async () => {
+    it("should handle empty coupon list", async () => {
       mockStripe.coupons.list.mockResolvedValue(createMockListResponse([]));
 
       const result = await fetchCoupons(mockStripe);
@@ -63,11 +63,11 @@ describe('coupons', () => {
       expect(result).toEqual([]);
     });
 
-    it('should log the number of fetched coupons', async () => {
+    it("should log the number of fetched coupons", async () => {
       const coupons = [
-        createMockCoupon({ id: 'coupon_1' }),
-        createMockCoupon({ id: 'coupon_2' }),
-        createMockCoupon({ id: 'coupon_3' }),
+        createMockCoupon({ id: "coupon_1" }),
+        createMockCoupon({ id: "coupon_2" }),
+        createMockCoupon({ id: "coupon_3" }),
       ];
       mockStripe.coupons.list.mockResolvedValue(
         createMockListResponse(coupons)
@@ -76,12 +76,12 @@ describe('coupons', () => {
       await fetchCoupons(mockStripe);
 
       expect(consoleSpy.log).toHaveBeenCalledWith(
-        expect.stringContaining('3 coupons')
+        expect.stringContaining("3 coupons")
       );
     });
   });
 
-  describe('migrateCoupons', () => {
+  describe("migrateCoupons", () => {
     let oldStripe: ReturnType<typeof createMockStripe>;
     let newStripe: ReturnType<typeof createMockStripe>;
 
@@ -90,9 +90,9 @@ describe('coupons', () => {
       newStripe = createMockStripe();
     });
 
-    it('should migrate coupon with null redeem_by', async () => {
+    it("should migrate coupon with null redeem_by", async () => {
       const coupon = createMockCoupon({
-        id: 'coupon_valid',
+        id: "coupon_valid",
         redeem_by: null,
       });
       oldStripe.coupons.list.mockResolvedValue(
@@ -105,10 +105,10 @@ describe('coupons', () => {
       expect(newStripe.coupons.create).toHaveBeenCalledTimes(1);
     });
 
-    it('should migrate coupon with future redeem_by date', async () => {
-      const futureTimestamp = Math.floor(Date.now() / 1000) + 86400; // 1 day in the future
+    it("should migrate coupon with future redeem_by date", async () => {
+      const futureTimestamp = Math.floor(Date.now() / 1000) + 86_400; // 1 day in the future
       const coupon = createMockCoupon({
-        id: 'coupon_future',
+        id: "coupon_future",
         redeem_by: futureTimestamp,
       });
       oldStripe.coupons.list.mockResolvedValue(
@@ -121,10 +121,10 @@ describe('coupons', () => {
       expect(newStripe.coupons.create).toHaveBeenCalledTimes(1);
     });
 
-    it('should skip expired coupons', async () => {
-      const pastTimestamp = Math.floor(Date.now() / 1000) - 86400; // 1 day in the past
+    it("should skip expired coupons", async () => {
+      const pastTimestamp = Math.floor(Date.now() / 1000) - 86_400; // 1 day in the past
       const coupon = createMockCoupon({
-        id: 'coupon_expired',
+        id: "coupon_expired",
         redeem_by: pastTimestamp,
       });
       oldStripe.coupons.list.mockResolvedValue(
@@ -136,16 +136,16 @@ describe('coupons', () => {
       expect(newStripe.coupons.create).not.toHaveBeenCalled();
     });
 
-    it('should create coupon with all properties', async () => {
+    it("should create coupon with all properties", async () => {
       const coupon = createMockCoupon({
-        id: 'coupon_test',
+        id: "coupon_test",
         amount_off: 500,
-        currency: 'usd',
-        duration: 'repeating',
+        currency: "usd",
+        duration: "repeating",
         duration_in_months: 3,
         max_redemptions: 100,
-        metadata: { promo: 'summer' },
-        name: 'Summer Sale',
+        metadata: { promo: "summer" },
+        name: "Summer Sale",
         percent_off: null,
       });
       oldStripe.coupons.list.mockResolvedValue(
@@ -157,24 +157,24 @@ describe('coupons', () => {
 
       expect(newStripe.coupons.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          id: 'coupon_test',
+          id: "coupon_test",
           amount_off: 500,
-          currency: 'usd',
-          duration: 'repeating',
+          currency: "usd",
+          duration: "repeating",
           duration_in_months: 3,
           max_redemptions: 100,
-          metadata: { promo: 'summer' },
-          name: 'Summer Sale',
+          metadata: { promo: "summer" },
+          name: "Summer Sale",
         })
       );
     });
 
-    it('should create percent_off coupon', async () => {
+    it("should create percent_off coupon", async () => {
       const coupon = createMockCoupon({
-        id: 'coupon_percent',
+        id: "coupon_percent",
         amount_off: null,
         percent_off: 25,
-        duration: 'forever',
+        duration: "forever",
       });
       oldStripe.coupons.list.mockResolvedValue(
         createMockListResponse([coupon])
@@ -186,48 +186,46 @@ describe('coupons', () => {
       expect(newStripe.coupons.create).toHaveBeenCalledWith(
         expect.objectContaining({
           percent_off: 25,
-          duration: 'forever',
+          duration: "forever",
         })
       );
     });
 
-    it('should skip existing coupons', async () => {
-      const coupon = createMockCoupon({ id: 'coupon_existing' });
+    it("should skip existing coupons", async () => {
+      const coupon = createMockCoupon({ id: "coupon_existing" });
       oldStripe.coupons.list.mockResolvedValue(
         createMockListResponse([coupon])
       );
       newStripe.coupons.create.mockRejectedValue(
-        new Error('Coupon already exists in live mode: coupon_existing')
+        new Error("Coupon already exists in live mode: coupon_existing")
       );
 
       const result = await migrateCoupons(oldStripe, newStripe);
 
       expect(result).toContain(undefined);
       expect(consoleSpy.log).toHaveBeenCalledWith(
-        expect.stringContaining('already exists')
+        expect.stringContaining("already exists")
       );
     });
 
     it('should throw non-"already exists" errors', async () => {
-      const coupon = createMockCoupon({ id: 'coupon_test' });
+      const coupon = createMockCoupon({ id: "coupon_test" });
       oldStripe.coupons.list.mockResolvedValue(
         createMockListResponse([coupon])
       );
-      newStripe.coupons.create.mockRejectedValue(new Error('Network error'));
+      newStripe.coupons.create.mockRejectedValue(new Error("Network error"));
 
       await expect(migrateCoupons(oldStripe, newStripe)).rejects.toThrow(
-        'Network error'
+        "Network error"
       );
     });
 
-    it('should return array of created coupons', async () => {
+    it("should return array of created coupons", async () => {
       const coupons = [
-        createMockCoupon({ id: 'coupon_1' }),
-        createMockCoupon({ id: 'coupon_2' }),
+        createMockCoupon({ id: "coupon_1" }),
+        createMockCoupon({ id: "coupon_2" }),
       ];
-      oldStripe.coupons.list.mockResolvedValue(
-        createMockListResponse(coupons)
-      );
+      oldStripe.coupons.list.mockResolvedValue(createMockListResponse(coupons));
       newStripe.coupons.create
         .mockResolvedValueOnce(coupons[0])
         .mockResolvedValueOnce(coupons[1]);
@@ -237,17 +235,15 @@ describe('coupons', () => {
       expect(result).toHaveLength(2);
     });
 
-    it('should filter out expired coupons and migrate valid ones', async () => {
-      const futureTimestamp = Math.floor(Date.now() / 1000) + 86400;
-      const pastTimestamp = Math.floor(Date.now() / 1000) - 86400;
+    it("should filter out expired coupons and migrate valid ones", async () => {
+      const futureTimestamp = Math.floor(Date.now() / 1000) + 86_400;
+      const pastTimestamp = Math.floor(Date.now() / 1000) - 86_400;
       const coupons = [
-        createMockCoupon({ id: 'coupon_valid', redeem_by: futureTimestamp }),
-        createMockCoupon({ id: 'coupon_expired', redeem_by: pastTimestamp }),
-        createMockCoupon({ id: 'coupon_no_expiry', redeem_by: null }),
+        createMockCoupon({ id: "coupon_valid", redeem_by: futureTimestamp }),
+        createMockCoupon({ id: "coupon_expired", redeem_by: pastTimestamp }),
+        createMockCoupon({ id: "coupon_no_expiry", redeem_by: null }),
       ];
-      oldStripe.coupons.list.mockResolvedValue(
-        createMockListResponse(coupons)
-      );
+      oldStripe.coupons.list.mockResolvedValue(createMockListResponse(coupons));
       newStripe.coupons.create.mockResolvedValue(coupons[0]);
 
       await migrateCoupons(oldStripe, newStripe);

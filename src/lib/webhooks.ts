@@ -1,11 +1,11 @@
-import chalk from 'chalk';
-import Stripe from 'stripe';
+import chalk from "chalk";
+import type Stripe from "stripe";
 
 export const fetchWebhooks = async (stripe: Stripe) => {
-  const webhookEndpoints = [];
+  const webhookEndpoints: Stripe.WebhookEndpoint[] = [];
 
-  let startingAfter: Stripe.WebhookEndpoint['id'] = '';
-  let hasMoreWebhooks: boolean = true;
+  let startingAfter: Stripe.WebhookEndpoint["id"] = "";
+  let hasMoreWebhooks = true;
 
   while (hasMoreWebhooks) {
     const listParams: Stripe.WebhookEndpointListParams = { limit: 100 };
@@ -19,7 +19,7 @@ export const fetchWebhooks = async (stripe: Stripe) => {
     webhookEndpoints.push(...response.data);
 
     if (response.has_more && response.data.length > 0) {
-      startingAfter = response.data[response.data.length - 1].id;
+      startingAfter = response.data.at(-1)?.id ?? "";
     } else {
       hasMoreWebhooks = false;
     }
@@ -63,9 +63,9 @@ export const migrateWebhooks = async (oldStripe: Stripe, newStripe: Stripe) => {
       metadata: webhook.metadata,
       enabled_events: webhook.enabled_events.map(
         (event) => event
-      ) as Stripe.WebhookEndpointCreateParams['enabled_events'],
+      ) as Stripe.WebhookEndpointCreateParams["enabled_events"],
       api_version: webhook.api_version
-        ? (webhook.api_version as Stripe.WebhookEndpointCreateParams['api_version'])
+        ? (webhook.api_version as Stripe.WebhookEndpointCreateParams["api_version"])
         : undefined,
       description: webhook.description ?? undefined,
     });

@@ -1,11 +1,11 @@
-import chalk from 'chalk';
-import Stripe from 'stripe';
+import chalk from "chalk";
+import type Stripe from "stripe";
 
 export const fetchCoupons = async (stripe: Stripe) => {
-  const coupons = [];
+  const coupons: Stripe.Coupon[] = [];
 
-  let startingAfter: Stripe.Coupon['id'] = '';
-  let hasMoreCoupons: boolean = true;
+  let startingAfter: Stripe.Coupon["id"] = "";
+  let hasMoreCoupons = true;
 
   while (hasMoreCoupons) {
     const listParams: Stripe.CouponListParams = { limit: 100 };
@@ -19,7 +19,7 @@ export const fetchCoupons = async (stripe: Stripe) => {
     coupons.push(...response.data);
 
     if (response.has_more && response.data.length > 0) {
-      startingAfter = response.data[response.data.length - 1].id;
+      startingAfter = response.data.at(-1)?.id ?? "";
     } else {
       hasMoreCoupons = false;
     }
@@ -67,7 +67,7 @@ export const migrateCoupons = async (oldStripe: Stripe, newStripe: Stripe) => {
       } catch (error) {
         if (
           error instanceof Error &&
-          error.message.includes('already exists')
+          error.message.includes("already exists")
         ) {
           console.log(
             chalk.blue(`Coupon ${coupon.id} already exists, skipping...`)

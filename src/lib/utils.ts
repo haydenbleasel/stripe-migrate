@@ -1,5 +1,5 @@
-import chalk from 'chalk';
-import Stripe from 'stripe';
+import chalk from "chalk";
+import Stripe from "stripe";
 
 export const createStripeInstances = (
   from?: string,
@@ -9,19 +9,19 @@ export const createStripeInstances = (
   newStripe: Stripe;
 } => {
   if (!from) {
-    throw new Error('<from> argument is required');
+    throw new Error("<from> argument is required");
   }
 
   if (!to) {
-    throw new Error('<to> argument is required');
+    throw new Error("<to> argument is required");
   }
 
   const oldStripe = new Stripe(from, {
-    apiVersion: '2022-11-15',
+    apiVersion: "2022-11-15",
     telemetry: false,
   });
   const newStripe = new Stripe(to, {
-    apiVersion: '2022-11-15',
+    apiVersion: "2022-11-15",
     telemetry: false,
   });
 
