@@ -1,3 +1,40 @@
+# v1.0.16 (Tue Jan 06 2026)
+
+#### ⚠️ Pushed to `main`
+
+- Fix permissions for OIDC flow ([@haydenbleasel](https://github.com/haydenbleasel))
+- Update package.json ([@haydenbleasel](https://github.com/haydenbleasel))
+- Update push.yml ([@haydenbleasel](https://github.com/haydenbleasel))
+- Add optional chaining to coupon ([@haydenbleasel](https://github.com/haydenbleasel))
+- Fix mock customer matching to handle customers without emails by matching them by index position ([@haydenbleasel](https://github.com/haydenbleasel))
+- Fix type annotation ([@haydenbleasel](https://github.com/haydenbleasel))
+- Fix type annotation issue ([@haydenbleasel](https://github.com/haydenbleasel))
+- Use has_more for pagination ([@haydenbleasel](https://github.com/haydenbleasel))
+- Fix webhooks logic ([@haydenbleasel](https://github.com/haydenbleasel))
+- Update subscriptions.ts ([@haydenbleasel](https://github.com/haydenbleasel))
+- Fix type annotations in subscriptions ([@haydenbleasel](https://github.com/haydenbleasel))
+- Fix duplicate coupon fetching ([@haydenbleasel](https://github.com/haydenbleasel))
+- Switch to pnpm ([@haydenbleasel](https://github.com/haydenbleasel))
+
+#### 🔩 Dependency Updates
+
+- Bump brace-expansion from 1.1.11 to 1.1.12 [#10](https://github.com/haydenbleasel/stripe-migrate/pull/10) ([@dependabot[bot]](https://github.com/dependabot[bot]))
+- Bump nanoid from 3.3.6 to 3.3.8 [#7](https://github.com/haydenbleasel/stripe-migrate/pull/7) ([@dependabot[bot]](https://github.com/dependabot[bot]))
+- Bump @babel/helpers from 7.22.6 to 7.26.10 [#8](https://github.com/haydenbleasel/stripe-migrate/pull/8) ([@dependabot[bot]](https://github.com/dependabot[bot]))
+- Bump rollup from 3.26.3 to 3.29.5 [#5](https://github.com/haydenbleasel/stripe-migrate/pull/5) ([@dependabot[bot]](https://github.com/dependabot[bot]))
+- Bump cross-spawn from 7.0.3 to 7.0.6 [#6](https://github.com/haydenbleasel/stripe-migrate/pull/6) ([@dependabot[bot]](https://github.com/dependabot[bot]))
+- Bump micromatch from 4.0.5 to 4.0.8 [#4](https://github.com/haydenbleasel/stripe-migrate/pull/4) ([@dependabot[bot]](https://github.com/dependabot[bot]))
+- Bump braces from 3.0.2 to 3.0.3 [#3](https://github.com/haydenbleasel/stripe-migrate/pull/3) ([@dependabot[bot]](https://github.com/dependabot[bot]))
+- Bump postcss from 8.4.27 to 8.4.31 [#1](https://github.com/haydenbleasel/stripe-migrate/pull/1) ([@dependabot[bot]](https://github.com/dependabot[bot]))
+- Bump @babel/traverse from 7.22.8 to 7.23.2 [#2](https://github.com/haydenbleasel/stripe-migrate/pull/2) ([@dependabot[bot]](https://github.com/dependabot[bot]))
+
+#### Authors: 2
+
+- [@dependabot[bot]](https://github.com/dependabot[bot])
+- Hayden Bleasel ([@haydenbleasel](https://github.com/haydenbleasel))
+
+---
+
 # v1.0.15 (Fri Jan 19 2024)
 
 #### ⚠️ Pushed to `main`
