@@ -23,16 +23,16 @@ jobs:
         with:
           node-version: latest
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        run: pnpm install --frozen-lockfile
       - name: Cache node modules
         uses: actions/cache@v3
         with:
           path: node_modules
-          key: yarn-deps-${{ hashFiles('yarn.lock') }}
+          key: pnpm-deps-${{ hashFiles('pnpm-lock.yaml') }}
           restore-keys: |
-            yarn-deps-${{ hashFiles('yarn.lock') }}
+            pnpm-deps-${{ hashFiles('pnpm-lock.yaml') }}
       - name: Build
-        run: yarn build
+        run: pnpm build
       - name: Create Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
