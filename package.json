@@ -1,7 +1,7 @@
 {
   "name": "stripe-migrate",
   "packageManager": "pnpm@9.15.4",
-  "version": "1.0.19",
+  "version": "1.0.20",
   "description": "A Node-based CLI tool to migrate content from between Stripe accounts.",
   "main": "dist/index.js",
   "publishConfig": {
