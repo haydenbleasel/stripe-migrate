@@ -42,8 +42,8 @@ export const migrateWebhooks = async (oldStripe: Stripe, newStripe: Stripe) => {
       newWebhooks.find(
         (newWebhook) =>
           newWebhook.url === webhook.url &&
-          newWebhook.enabled_events.every((event) =>
-            webhook.enabled_events.includes(event)
+          webhook.enabled_events.every((event) =>
+            newWebhook.enabled_events.includes(event)
           )
       )
     ) {
