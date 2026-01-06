@@ -29,7 +29,9 @@
     "build": "tsup",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "fix": "ultracite fix",
+    "check": "ultracite check"
   },
   "type": "module",
   "author": "Hayden Bleasel <hello@haydenbleasel.com>",
