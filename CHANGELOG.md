@@ -1,3 +1,15 @@
+# v1.0.17 (Tue Jan 06 2026)
+
+#### ⚠️ Pushed to `main`
+
+- Output subscription ID mapping ([@haydenbleasel](https://github.com/haydenbleasel))
+
+#### Authors: 1
+
+- Hayden Bleasel ([@haydenbleasel](https://github.com/haydenbleasel))
+
+---
+
 # v1.0.16 (Tue Jan 06 2026)
 
 #### ⚠️ Pushed to `main`
