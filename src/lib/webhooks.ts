@@ -4,7 +4,7 @@ import Stripe from 'stripe';
 const fetchWebhooks = async (stripe: Stripe) => {
   const webhookEndpoints = [];
 
-  let startingAfter: Stripe.Product['id'] = '';
+  let startingAfter: Stripe.WebhookEndpoint['id'] = '';
   let hasMoreWebhooks: boolean = true;
 
   while (hasMoreWebhooks) {
