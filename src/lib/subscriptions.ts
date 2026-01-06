@@ -242,7 +242,12 @@ export const migrateSubscriptions = async (
       let default_payment_method: Stripe.SubscriptionCreateParams["default_payment_method"];
 
       let automatic_tax: Stripe.SubscriptionCreateParams["automatic_tax"] =
-        subscription.automatic_tax;
+        subscription.automatic_tax
+          ? {
+              enabled: subscription.automatic_tax.enabled,
+              liability: subscription.automatic_tax.liability,
+            }
+          : undefined;
 
       if (dryRun) {
         const oldCustomer =
