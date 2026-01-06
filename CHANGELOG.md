@@ -1,3 +1,21 @@
+# v1.0.18 (Tue Jan 06 2026)
+
+#### ⚠️ Pushed to `main`
+
+- Merge branch 'main' of https://github.com/haydenbleasel/stripe-migrate ([@haydenbleasel](https://github.com/haydenbleasel))
+- Run Ultracite, cleanup codebase ([@haydenbleasel](https://github.com/haydenbleasel))
+- Update package.json ([@haydenbleasel](https://github.com/haydenbleasel))
+- Add Ultracite ([@haydenbleasel](https://github.com/haydenbleasel))
+- Remove old linter ([@haydenbleasel](https://github.com/haydenbleasel))
+- Add unit tests ([@haydenbleasel](https://github.com/haydenbleasel))
+- Export and isolate functions ([@haydenbleasel](https://github.com/haydenbleasel))
+
+#### Authors: 1
+
+- Hayden Bleasel ([@haydenbleasel](https://github.com/haydenbleasel))
+
+---
+
 # v1.0.17 (Tue Jan 06 2026)
 
 #### ⚠️ Pushed to `main`
