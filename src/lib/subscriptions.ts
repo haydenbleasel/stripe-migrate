@@ -77,6 +77,61 @@ export const fetchCustomers = async (stripe: Stripe) => {
   return customers;
 };
 
+export const cancelAllSubscriptions = async (stripe: Stripe) => {
+  const subscriptions: Stripe.Subscription[] = [];
+
+  let startingAfter: Stripe.Subscription["id"] = "";
+  let hasMoreSubscriptions = true;
+
+  while (hasMoreSubscriptions) {
+    const listParams: Stripe.SubscriptionListParams = {
+      limit: 100,
+    };
+
+    if (startingAfter) {
+      listParams.starting_after = startingAfter;
+    }
+
+    const response = await stripe.subscriptions.list(listParams);
+
+    subscriptions.push(...response.data);
+
+    if (response.has_more && response.data.length > 0) {
+      startingAfter = response.data.at(-1)?.id ?? "";
+    } else {
+      hasMoreSubscriptions = false;
+    }
+  }
+
+  console.log(
+    chalk.bgGrey(`Found ${subscriptions.length} subscriptions to cancel...`)
+  );
+
+  if (subscriptions.length === 0) {
+    console.log(chalk.green("No subscriptions to cancel."));
+    return;
+  }
+
+  const results = await Promise.allSettled(
+    subscriptions.map(async (subscription) => {
+      await stripe.subscriptions.cancel(subscription.id);
+      console.log(chalk.blue(`Cancelled subscription ${subscription.id}`));
+      return subscription.id;
+    })
+  );
+
+  const succeeded = results.filter((r) => r.status === "fulfilled").length;
+  const failed = results.filter((r) => r.status === "rejected").length;
+
+  console.log(
+    chalk.green(`\nDone. Cancelled ${succeeded} subscriptions.`)
+  );
+
+  if (failed > 0) {
+    console.log(chalk.red(`Failed to cancel ${failed} subscriptions.`));
+  }
+};
+
 export const migrateSubscriptions = async (
   oldStripe: Stripe,
   newStripe: Stripe,

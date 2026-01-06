@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  cancelAllSubscriptions,
   fetchCustomers,
   fetchSubscriptions,
   getAnonymisedEmail,
@@ -192,6 +193,122 @@ describe("subscriptions", () => {
 
       expect(consoleSpy.log).toHaveBeenCalledWith(
         expect.stringContaining("1 customers")
+      );
+    });
+  });
+
+  describe("cancelAllSubscriptions", () => {
+    let mockStripe: ReturnType<typeof createMockStripe>;
+
+    beforeEach(() => {
+      mockStripe = createMockStripe();
+    });
+
+    it("should fetch and cancel all subscriptions", async () => {
+      const subscriptions = [
+        createMockSubscription({ id: "sub_1" }),
+        createMockSubscription({ id: "sub_2" }),
+        createMockSubscription({ id: "sub_3" }),
+      ];
+      mockStripe.subscriptions.list.mockResolvedValue(
+        createMockListResponse(subscriptions)
+      );
+      mockStripe.subscriptions.cancel.mockResolvedValue({});
+
+      await cancelAllSubscriptions(mockStripe);
+
+      expect(mockStripe.subscriptions.cancel).toHaveBeenCalledTimes(3);
+      expect(mockStripe.subscriptions.cancel).toHaveBeenCalledWith("sub_1");
+      expect(mockStripe.subscriptions.cancel).toHaveBeenCalledWith("sub_2");
+      expect(mockStripe.subscriptions.cancel).toHaveBeenCalledWith("sub_3");
+    });
+
+    it("should handle empty subscription list", async () => {
+      mockStripe.subscriptions.list.mockResolvedValue(
+        createMockListResponse([])
+      );
+
+      await cancelAllSubscriptions(mockStripe);
+
+      expect(mockStripe.subscriptions.cancel).not.toHaveBeenCalled();
+      expect(consoleSpy.log).toHaveBeenCalledWith(
+        expect.stringContaining("No subscriptions to cancel")
+      );
+    });
+
+    it("should paginate through multiple pages", async () => {
+      const page1Subscriptions = [
+        createMockSubscription({ id: "sub_1" }),
+        createMockSubscription({ id: "sub_2" }),
+      ];
+      const page2Subscriptions = [createMockSubscription({ id: "sub_3" })];
+
+      mockStripe.subscriptions.list
+        .mockResolvedValueOnce(createMockListResponse(page1Subscriptions, true))
+        .mockResolvedValueOnce(
+          createMockListResponse(page2Subscriptions, false)
+        );
+      mockStripe.subscriptions.cancel.mockResolvedValue({});
+
+      await cancelAllSubscriptions(mockStripe);
+
+      expect(mockStripe.subscriptions.list).toHaveBeenCalledTimes(2);
+      expect(mockStripe.subscriptions.cancel).toHaveBeenCalledTimes(3);
+    });
+
+    it("should log success count", async () => {
+      const subscriptions = [
+        createMockSubscription({ id: "sub_1" }),
+        createMockSubscription({ id: "sub_2" }),
+      ];
+      mockStripe.subscriptions.list.mockResolvedValue(
+        createMockListResponse(subscriptions)
+      );
+      mockStripe.subscriptions.cancel.mockResolvedValue({});
+
+      await cancelAllSubscriptions(mockStripe);
+
+      expect(consoleSpy.log).toHaveBeenCalledWith(
+        expect.stringContaining("Cancelled 2 subscriptions")
+      );
+    });
+
+    it("should handle partial failures gracefully", async () => {
+      const subscriptions = [
+        createMockSubscription({ id: "sub_1" }),
+        createMockSubscription({ id: "sub_2" }),
+        createMockSubscription({ id: "sub_3" }),
+      ];
+      mockStripe.subscriptions.list.mockResolvedValue(
+        createMockListResponse(subscriptions)
+      );
+      mockStripe.subscriptions.cancel
+        .mockResolvedValueOnce({})
+        .mockRejectedValueOnce(new Error("API error"))
+        .mockResolvedValueOnce({});
+
+      await cancelAllSubscriptions(mockStripe);
+
+      expect(mockStripe.subscriptions.cancel).toHaveBeenCalledTimes(3);
+      expect(consoleSpy.log).toHaveBeenCalledWith(
+        expect.stringContaining("Cancelled 2 subscriptions")
+      );
+      expect(consoleSpy.log).toHaveBeenCalledWith(
+        expect.stringContaining("Failed to cancel 1 subscriptions")
+      );
+    });
+
+    it("should log each cancelled subscription", async () => {
+      const subscriptions = [createMockSubscription({ id: "sub_123" })];
+      mockStripe.subscriptions.list.mockResolvedValue(
+        createMockListResponse(subscriptions)
+      );
+      mockStripe.subscriptions.cancel.mockResolvedValue({});
+
+      await cancelAllSubscriptions(mockStripe);
+
+      expect(consoleSpy.log).toHaveBeenCalledWith(
+        expect.stringContaining("Cancelled subscription sub_123")
       );
     });
   });

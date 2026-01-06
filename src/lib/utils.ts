@@ -33,3 +33,14 @@ export const handleError = (error: unknown): void => {
 
   console.log(chalk.red(message));
 };
+
+export const createSingleStripeInstance = (key?: string): Stripe => {
+  if (!key) {
+    throw new Error("<key> argument is required");
+  }
+
+  return new Stripe(key, {
+    apiVersion: "2022-11-15",
+    telemetry: false,
+  });
+};

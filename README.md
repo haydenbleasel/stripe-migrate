@@ -54,6 +54,14 @@ stripe-migrate subscriptions --from sk_test_123 --to sk_test_456 2>&1 | tee migr
 
 Once your account has been migrated, simply update your API keys and redeploy your app.
 
+### Cancelling Subscriptions
+
+To cancel all subscriptions in your old account after migration:
+
+```bash
+stripe-migrate cancel-subscriptions --key sk_test_123
+```
+
 Webhook, Product, Plan and Coupon migrations check for existing matching data and skips it if required. This means you can run it multiple times to ensure everything is migrated.
 
 ## Notes
@@ -67,57 +75,3 @@ I highly recommend testing this with a Test Mode account first as you can delete
 - Nothing to do with this repo, but I noticed Stripe's PAN copy tool doesn't capture Link payment methods.
 - When migrating products, prices have an unset tax behaviour. Needs fixing.
 
-## Other
-
-To cancel all the subscriptions in your old account, run this:
-
-```ts
-import Stripe from 'stripe';
-
-const stripe = new Stripe('[your secret key]', {
-  apiVersion: '2022-11-15',
-  telemetry: false,
-});
-
-export const fetchSubscriptions = async (stripe: Stripe) => {
-  const subscriptions = [];
-
-  let startingAfter: Stripe.Subscription['id'] = '';
-  let hasMoreSubscriptions: boolean = true;
-
-  while (hasMoreSubscriptions) {
-    const listParams: Stripe.SubscriptionListParams = {
-      limit: 100,
-    };
-
-    if (startingAfter) {
-      listParams.starting_after = startingAfter;
-    }
-
-    const response = await stripe.subscriptions.list(listParams);
-
-    if (response.data.length > 0) {
-      subscriptions.push(...response.data);
-      startingAfter = response.data[response.data.length - 1].id;
-    } else {
-      hasMoreSubscriptions = false;
-    }
-  }
-
-  return subscriptions;
-};
-
-const main = async () => {
-  const subscriptions = await fetchSubscriptions(stripe);
-
-  const promises = subscriptions.map(async (subscription) => {
-    await stripe.subscriptions.del(subscription.id);
-  });
-
-  await Promise.all(promises);
-
-  console.log('done');
-};
-
-main();
-```

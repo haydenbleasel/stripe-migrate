@@ -3,8 +3,15 @@ import pkg from "../package.json";
 import { migrateCoupons } from "./lib/coupons";
 import { migratePlans } from "./lib/plans";
 import { migrateProducts } from "./lib/products";
-import { migrateSubscriptions } from "./lib/subscriptions";
-import { createStripeInstances, handleError } from "./lib/utils";
+import {
+  cancelAllSubscriptions,
+  migrateSubscriptions,
+} from "./lib/subscriptions";
+import {
+  createSingleStripeInstance,
+  createStripeInstances,
+  handleError,
+} from "./lib/utils";
 import { migrateWebhooks } from "./lib/webhooks";
 
 program
@@ -93,6 +100,19 @@ program
         omitCustomerIds.split(",").filter(Boolean),
         dryRun
       );
+    } catch (error) {
+      handleError(error);
+    }
+  });
+
+program
+  .command("cancel-subscriptions")
+  .description("Cancel all subscriptions in an account")
+  .option("--key <key>", "Stripe secret key for the account", undefined)
+  .action(async ({ key }) => {
+    try {
+      const stripe = createSingleStripeInstance(key);
+      await cancelAllSubscriptions(stripe);
     } catch (error) {
       handleError(error);
     }

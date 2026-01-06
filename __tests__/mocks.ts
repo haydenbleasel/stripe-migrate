@@ -321,6 +321,7 @@ export const createMockStripe = () => {
     subscriptions: {
       list: vi.fn(),
       create: vi.fn(),
+      cancel: vi.fn(),
     },
     webhookEndpoints: {
       list: vi.fn(),
