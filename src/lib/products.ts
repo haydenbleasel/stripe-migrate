@@ -16,8 +16,9 @@ const fetchProducts = async (stripe: Stripe) => {
 
     const response = await stripe.products.list(listParams);
 
-    if (response.data.length > 0) {
-      products.push(...response.data);
+    products.push(...response.data);
+
+    if (response.has_more && response.data.length > 0) {
       startingAfter = response.data[response.data.length - 1].id;
     } else {
       hasMoreProducts = false;

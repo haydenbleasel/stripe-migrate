@@ -16,8 +16,9 @@ const fetchWebhooks = async (stripe: Stripe) => {
 
     const response = await stripe.webhookEndpoints.list(listParams);
 
-    if (response.data.length > 0) {
-      webhookEndpoints.push(...response.data);
+    webhookEndpoints.push(...response.data);
+
+    if (response.has_more && response.data.length > 0) {
       startingAfter = response.data[response.data.length - 1].id;
     } else {
       hasMoreWebhooks = false;

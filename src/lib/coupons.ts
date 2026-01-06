@@ -16,8 +16,9 @@ const fetchCoupons = async (stripe: Stripe) => {
 
     const response = await stripe.coupons.list(listParams);
 
-    if (response.data.length > 0) {
-      coupons.push(...response.data);
+    coupons.push(...response.data);
+
+    if (response.has_more && response.data.length > 0) {
       startingAfter = response.data[response.data.length - 1].id;
     } else {
       hasMoreCoupons = false;

@@ -16,8 +16,9 @@ const fetchPlans = async (stripe: Stripe) => {
 
     const response = await stripe.plans.list(listParams);
 
-    if (response.data.length > 0) {
-      plans.push(...response.data);
+    plans.push(...response.data);
+
+    if (response.has_more && response.data.length > 0) {
       startingAfter = response.data[response.data.length - 1].id;
     } else {
       hasMorePlans = false;

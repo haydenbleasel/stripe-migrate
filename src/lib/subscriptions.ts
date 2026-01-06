@@ -26,8 +26,9 @@ export const fetchSubscriptions = async (stripe: Stripe) => {
 
     const response = await stripe.subscriptions.list(listParams);
 
-    if (response.data.length > 0) {
-      subscriptions.push(...response.data);
+    subscriptions.push(...response.data);
+
+    if (response.has_more && response.data.length > 0) {
       startingAfter = response.data[response.data.length - 1].id;
     } else {
       hasMoreSubscriptions = false;
@@ -60,8 +61,9 @@ export const fetchCustomers = async (stripe: Stripe) => {
 
     const response = await stripe.customers.list(listParams);
 
-    if (response.data.length > 0) {
-      customers.push(...response.data);
+    customers.push(...response.data);
+
+    if (response.has_more && response.data.length > 0) {
       startingAfter = response.data[response.data.length - 1].id;
     } else {
       hasMoreCustomers = false;
