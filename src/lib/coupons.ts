@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 import Stripe from 'stripe';
 
-const fetchCoupons = async (stripe: Stripe) => {
+export const fetchCoupons = async (stripe: Stripe) => {
   const coupons = [];
 
   let startingAfter: Stripe.Coupon['id'] = '';

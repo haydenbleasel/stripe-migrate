@@ -2,7 +2,7 @@ import chalk from 'chalk';
 import Stripe from 'stripe';
 import crypto from 'node:crypto';
 
-const getAnonymisedEmail = (email: string) => {
+export const getAnonymisedEmail = (email: string) => {
   const emailHash = crypto.createHash('md5').update(email).digest('hex');
 
   return `${emailHash}@example.com`;

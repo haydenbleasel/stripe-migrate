@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 import Stripe from 'stripe';
 
-const fetchWebhooks = async (stripe: Stripe) => {
+export const fetchWebhooks = async (stripe: Stripe) => {
   const webhookEndpoints = [];
 
   let startingAfter: Stripe.WebhookEndpoint['id'] = '';

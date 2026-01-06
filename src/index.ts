@@ -1,45 +1,11 @@
 import { program } from 'commander';
 import pkg from '../package.json';
-import chalk from 'chalk';
 import { migratePlans } from './lib/plans';
 import { migrateCoupons } from './lib/coupons';
 import { migrateSubscriptions } from './lib/subscriptions';
-import Stripe from 'stripe';
 import { migrateWebhooks } from './lib/webhooks';
 import { migrateProducts } from './lib/products';
-
-const createStripeInstances = (
-  from?: string,
-  to?: string
-): {
-  oldStripe: Stripe;
-  newStripe: Stripe;
-} => {
-  if (!from) {
-    throw new Error('<from> argument is required');
-  }
-
-  if (!to) {
-    throw new Error('<to> argument is required');
-  }
-
-  const oldStripe = new Stripe(from, {
-    apiVersion: '2022-11-15',
-    telemetry: false,
-  });
-  const newStripe = new Stripe(to, {
-    apiVersion: '2022-11-15',
-    telemetry: false,
-  });
-
-  return { oldStripe, newStripe };
-};
-
-const handleError = (error: unknown): void => {
-  const message = error instanceof Error ? error.message : `${error}`;
-
-  console.log(chalk.red(message));
-};
+import { createStripeInstances, handleError } from './lib/utils';
 
 program
   .name('stripe-migrate')
