@@ -1,3 +1,15 @@
+# v1.0.19 (Tue Jan 06 2026)
+
+#### ⚠️ Pushed to `main`
+
+- Create cancel subscription func for README ([@haydenbleasel](https://github.com/haydenbleasel))
+
+#### Authors: 1
+
+- Hayden Bleasel ([@haydenbleasel](https://github.com/haydenbleasel))
+
+---
+
 # v1.0.18 (Tue Jan 06 2026)
 
 #### ⚠️ Pushed to `main`
