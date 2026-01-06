@@ -179,16 +179,7 @@ export const migrateSubscriptions = async (
           ? subscription.customer
           : subscription.customer?.id;
 
-      const customerPaymentMethod = await newStripe.paymentMethods.list({
-        customer: customerId,
-      });
-
-      if (!customerPaymentMethod.data[0]) {
-        throw new Error('Failed to find payment method on customer');
-      }
-
-      let default_payment_method: Stripe.SubscriptionCreateParams['default_payment_method'] =
-        customerPaymentMethod.data[0].id;
+      let default_payment_method: Stripe.SubscriptionCreateParams['default_payment_method'];
 
       let automatic_tax: Stripe.SubscriptionCreateParams['automatic_tax'] =
         subscription.automatic_tax;
@@ -230,8 +221,20 @@ export const migrateSubscriptions = async (
         customerId = mockCustomer.id;
         default_payment_method = paymentMethod.data[0].id;
         automatic_tax = undefined;
-      } else if (customerIds.length && !customerIds.includes(customerId)) {
-        return;
+      } else {
+        if (customerIds.length && !customerIds.includes(customerId)) {
+          return;
+        }
+
+        const customerPaymentMethod = await newStripe.paymentMethods.list({
+          customer: customerId,
+        });
+
+        if (!customerPaymentMethod.data[0]) {
+          throw new Error('Failed to find payment method on customer');
+        }
+
+        default_payment_method = customerPaymentMethod.data[0].id;
       }
 
       const billing_thresholds: Stripe.SubscriptionCreateParams['billing_thresholds'] =
