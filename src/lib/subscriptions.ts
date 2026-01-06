@@ -430,7 +430,7 @@ export const migrateSubscriptions = async (
         cancel_at_period_end: subscription.cancel_at_period_end,
         cancel_at,
         collection_method: subscription.collection_method,
-        coupon: subscription.discount?.coupon.id ?? undefined,
+        coupon: subscription.discount?.coupon?.id ?? undefined,
         currency: subscription.currency,
         customer: customerId,
         days_until_due: subscription.days_until_due ?? undefined,
