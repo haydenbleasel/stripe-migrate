@@ -196,10 +196,13 @@ export const migrateSubscriptions = async (
           return;
         }
 
-        const mockCustomer = mockCustomers.find(({ email }) =>
-          oldCustomer.email
-            ? email === getAnonymisedEmail(oldCustomer.email)
-            : null
+        const mockCustomer = mockCustomers.find(
+          (mock, index) =>
+            oldCustomer.email
+              ? mock.email === getAnonymisedEmail(oldCustomer.email)
+              : index === mockCustomers.findIndex((_, i) =>
+                  !oldCustomersToMigrate[i]?.email
+                )
         );
 
         if (!mockCustomer) {
