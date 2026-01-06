@@ -8,7 +8,7 @@ const fetchWebhooks = async (stripe: Stripe) => {
   let hasMoreWebhooks: boolean = true;
 
   while (hasMoreWebhooks) {
-    const listParams: Stripe.ProductListParams = { limit: 100 };
+    const listParams: Stripe.WebhookEndpointListParams = { limit: 100 };
 
     if (startingAfter) {
       listParams.starting_after = startingAfter;
