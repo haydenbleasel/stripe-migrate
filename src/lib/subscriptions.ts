@@ -46,11 +46,11 @@ export const fetchSubscriptions = async (stripe: Stripe) => {
 export const fetchCustomers = async (stripe: Stripe) => {
   const customers = [];
 
-  let startingAfter: Stripe.Subscription['id'] = '';
+  let startingAfter: Stripe.Customer['id'] = '';
   let hasMoreCustomers: boolean = true;
 
   while (hasMoreCustomers) {
-    const listParams: Stripe.SubscriptionListParams = {
+    const listParams: Stripe.CustomerListParams = {
       limit: 100,
     };
 
