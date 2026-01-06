@@ -160,6 +160,8 @@ export const migrateSubscriptions = async (
     });
   }
 
+  const subscriptionMapping: Record<string, string> = {};
+
   const promises = oldSubscriptions
 
     // Only migrate active subscriptions
@@ -455,10 +457,19 @@ export const migrateSubscriptions = async (
         trial_settings: subscription.trial_settings ?? undefined,
       });
 
+      subscriptionMapping[subscription.id] = newSubscription.id;
+
       console.log(
         `Created new subscription ${newSubscription.id} for ${newSubscription.customer}`
       );
     });
 
-  return Promise.all(promises);
+  await Promise.all(promises);
+
+  if (Object.keys(subscriptionMapping).length > 0) {
+    console.log(chalk.green('\nSubscription ID mapping (old -> new):'));
+    console.log(JSON.stringify(subscriptionMapping, null, 2));
+  }
+
+  return subscriptionMapping;
 };

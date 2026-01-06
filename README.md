@@ -34,6 +34,24 @@ Additionally, you can pass in a list of customer IDs to migrate subscriptions fo
 stripe-migrate subscriptions --from sk_test_123 --to sk_test_456 --customers cus_123,cus_456
 ```
 
+### Subscription ID Mapping
+
+Since subscription IDs cannot be preserved during migration, the CLI outputs a JSON mapping of old to new subscription IDs after completion:
+
+```
+Subscription ID mapping (old -> new):
+{
+  "sub_1ABC123": "sub_1XYZ789",
+  "sub_1DEF456": "sub_1UVW012"
+}
+```
+
+You can capture this to a file for updating your database references:
+
+```bash
+stripe-migrate subscriptions --from sk_test_123 --to sk_test_456 2>&1 | tee migration.log
+```
+
 Once your account has been migrated, simply update your API keys and redeploy your app.
 
 Webhook, Product, Plan and Coupon migrations check for existing matching data and skips it if required. This means you can run it multiple times to ensure everything is migrated.
