@@ -1,3 +1,15 @@
+# v1.0.20 (Tue Jan 06 2026)
+
+#### ⚠️ Pushed to `main`
+
+- Fix automatic_tax ([@haydenbleasel](https://github.com/haydenbleasel))
+
+#### Authors: 1
+
+- Hayden Bleasel ([@haydenbleasel](https://github.com/haydenbleasel))
+
+---
+
 # v1.0.19 (Tue Jan 06 2026)
 
 #### ⚠️ Pushed to `main`
