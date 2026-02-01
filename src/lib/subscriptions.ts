@@ -2,6 +2,41 @@ import crypto from "node:crypto";
 import chalk from "chalk";
 import type Stripe from "stripe";
 
+// Rate limiting configuration
+const DELAY_BETWEEN_SUBSCRIPTIONS_MS = 200; // 200ms between each subscription = ~5/sec
+const MAX_RETRIES = 5;
+const INITIAL_RETRY_DELAY_MS = 1000;
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const withRetry = async <T>(
+  fn: () => Promise<T>,
+  context: string,
+  retries = MAX_RETRIES,
+  delay = INITIAL_RETRY_DELAY_MS
+): Promise<T> => {
+  try {
+    return await fn();
+  } catch (error) {
+    const isRateLimitError =
+      error instanceof Error &&
+      (error.message.includes("rate limit") ||
+        error.message.includes("Rate limit") ||
+        (error as any).code === "rate_limit");
+
+    if (isRateLimitError && retries > 0) {
+      console.log(
+        chalk.yellow(
+          `Rate limit hit for ${context}, waiting ${delay}ms before retry (${retries} retries left)...`
+        )
+      );
+      await sleep(delay);
+      return withRetry(fn, context, retries - 1, delay * 2);
+    }
+    throw error;
+  }
+};
+
 export const getAnonymisedEmail = (email: string) => {
   const emailHash = crypto.createHash("md5").update(email).digest("hex");
 
@@ -24,7 +59,10 @@ export const fetchSubscriptions = async (stripe: Stripe) => {
       listParams.starting_after = startingAfter;
     }
 
-    const response = await stripe.subscriptions.list(listParams);
+    const response = await withRetry(
+      () => stripe.subscriptions.list(listParams),
+      "fetchSubscriptions"
+    );
 
     subscriptions.push(...response.data);
 
@@ -59,7 +97,10 @@ export const fetchCustomers = async (stripe: Stripe) => {
       listParams.starting_after = startingAfter;
     }
 
-    const response = await stripe.customers.list(listParams);
+    const response = await withRetry(
+      () => stripe.customers.list(listParams),
+      "fetchCustomers"
+    );
 
     customers.push(...response.data);
 
@@ -112,20 +153,28 @@ export const cancelAllSubscriptions = async (stripe: Stripe) => {
     return;
   }
 
-  const results = await Promise.allSettled(
-    subscriptions.map(async (subscription) => {
-      await stripe.subscriptions.cancel(subscription.id);
+  let succeeded = 0;
+  let failed = 0;
+
+  // Process sequentially with rate limiting
+  for (const subscription of subscriptions) {
+    try {
+      await withRetry(
+        () => stripe.subscriptions.cancel(subscription.id),
+        `cancel ${subscription.id}`
+      );
       console.log(chalk.blue(`Cancelled subscription ${subscription.id}`));
-      return subscription.id;
-    })
-  );
+      succeeded++;
+    } catch (error) {
+      console.log(
+        chalk.red(`Failed to cancel subscription ${subscription.id}: ${error}`)
+      );
+      failed++;
+    }
+    await sleep(DELAY_BETWEEN_SUBSCRIPTIONS_MS);
+  }
 
-  const succeeded = results.filter((r) => r.status === "fulfilled").length;
-  const failed = results.filter((r) => r.status === "rejected").length;
-
-  console.log(
-    chalk.green(`\nDone. Cancelled ${succeeded} subscriptions.`)
-  );
+  console.log(chalk.green(`\nDone. Cancelled ${succeeded} subscriptions.`));
 
   if (failed > 0) {
     console.log(chalk.red(`Failed to cancel ${failed} subscriptions.`));
@@ -180,27 +229,29 @@ export const migrateSubscriptions = async (
       oldCustomersToMigrate = oldCustomersToMigrate.slice(0, 20);
     }
 
-    const newCustomers = await Promise.all(
-      oldCustomersToMigrate.map(async (customer) => {
-        const newCustomer = await newStripe.customers.create({
-          email: customer.email
-            ? getAnonymisedEmail(customer.email)
-            : undefined,
-          name: customer.name ?? undefined,
-          payment_method: "pm_card_visa",
-        });
+    // Process sequentially with rate limiting
+    for (const customer of oldCustomersToMigrate) {
+      const newCustomer = await withRetry(
+        () =>
+          newStripe.customers.create({
+            email: customer.email
+              ? getAnonymisedEmail(customer.email)
+              : undefined,
+            name: customer.name ?? undefined,
+            payment_method: "pm_card_visa",
+          }),
+        `create mock customer ${customer.id}`
+      );
 
-        console.log(
-          chalk.blue(
-            `[Dry run] mocked customer ${newCustomer.email} (${newCustomer.id})...`
-          )
-        );
+      console.log(
+        chalk.blue(
+          `[Dry run] mocked customer ${newCustomer.email} (${newCustomer.id})...`
+        )
+      );
 
-        return newCustomer;
-      })
-    );
-
-    mockCustomers.push(...newCustomers);
+      mockCustomers.push(newCustomer);
+      await sleep(DELAY_BETWEEN_SUBSCRIPTIONS_MS);
+    }
   } else {
     console.log(
       chalk.blue(`Migrating ${oldCustomersToMigrate.length} customers...`)
@@ -217,11 +268,9 @@ export const migrateSubscriptions = async (
 
   const subscriptionMapping: Record<string, string> = {};
 
-  const promises = oldSubscriptions
-
+  const subscriptionsToMigrate = oldSubscriptions
     // Only migrate active subscriptions
     .filter((subscription) => subscription.status === "active")
-
     // Only migrate the customers we want
     .filter((subscription) => {
       const customerId =
@@ -230,10 +279,23 @@ export const migrateSubscriptions = async (
           : subscription.customer?.id;
 
       return oldCustomersToMigrate.find(({ id }) => id === customerId);
-    })
+    });
 
-    // biome-ignore lint/complexity/noExcessiveCognitiveComplexity: Migration logic requires handling many subscription properties
-    .map(async (subscription) => {
+  console.log(
+    chalk.blue(
+      `\nProcessing ${subscriptionsToMigrate.length} active subscriptions sequentially...`
+    )
+  );
+
+  let processed = 0;
+  let failed = 0;
+
+  // Process subscriptions sequentially with rate limiting
+  for (const subscription of subscriptionsToMigrate) {
+    processed++;
+    const progress = `[${processed}/${subscriptionsToMigrate.length}]`;
+
+    try {
       let customerId: Stripe.SubscriptionCreateParams["customer"] =
         typeof subscription.customer === "string"
           ? subscription.customer
@@ -252,11 +314,17 @@ export const migrateSubscriptions = async (
       if (dryRun) {
         const oldCustomer =
           typeof subscription.customer === "string"
-            ? await oldStripe.customers.retrieve(subscription.customer)
+            ? await withRetry(
+                () => oldStripe.customers.retrieve(subscription.customer as string),
+                `retrieve customer ${subscription.customer}`
+              )
             : subscription.customer;
 
         if (!oldCustomer || oldCustomer.deleted) {
-          return;
+          console.log(
+            chalk.yellow(`${progress} Skipping - customer deleted`)
+          );
+          continue;
         }
 
         const mockCustomer = mockCustomers.find((mock, index) =>
@@ -269,18 +337,22 @@ export const migrateSubscriptions = async (
         );
 
         if (!mockCustomer) {
-          return;
+          console.log(
+            chalk.yellow(`${progress} Skipping - no mock customer found`)
+          );
+          continue;
         }
 
         console.log(
           chalk.blue(
-            `[Dry run] found mock customer ${mockCustomer.email} (${mockCustomer.id})...`
+            `${progress} [Dry run] found mock customer ${mockCustomer.email} (${mockCustomer.id})...`
           )
         );
 
-        const paymentMethod = await newStripe.paymentMethods.list({
-          customer: mockCustomer.id,
-        });
+        const paymentMethod = await withRetry(
+          () => newStripe.paymentMethods.list({ customer: mockCustomer.id }),
+          `list payment methods for ${mockCustomer.id}`
+        );
 
         if (!paymentMethod.data[0]) {
           throw new Error("Failed to find payment method on mock customer");
@@ -291,15 +363,21 @@ export const migrateSubscriptions = async (
         automatic_tax = undefined;
       } else {
         if (customerIds.length && !customerIds.includes(customerId)) {
-          return;
+          continue;
         }
 
-        const customerPaymentMethod = await newStripe.paymentMethods.list({
-          customer: customerId,
-        });
+        const customerPaymentMethod = await withRetry(
+          () => newStripe.paymentMethods.list({ customer: customerId }),
+          `list payment methods for ${customerId}`
+        );
 
         if (!customerPaymentMethod.data[0]) {
-          throw new Error("Failed to find payment method on customer");
+          console.log(
+            chalk.yellow(
+              `${progress} Skipping ${subscription.id} - no payment method found for customer ${customerId}`
+            )
+          );
+          continue;
         }
 
         default_payment_method = customerPaymentMethod.data[0].id;
@@ -483,49 +561,70 @@ export const migrateSubscriptions = async (
         cancel_at = undefined;
       }
 
-      const newSubscription = await newStripe.subscriptions.create({
-        add_invoice_items: undefined,
-        application_fee_percent,
-        automatic_tax,
-        backdate_start_date: undefined,
-        billing_cycle_anchor: undefined,
-        billing_thresholds,
-        cancel_at_period_end: subscription.cancel_at_period_end,
-        cancel_at,
-        collection_method: subscription.collection_method,
-        coupon: subscription.discount?.coupon?.id ?? undefined,
-        currency: subscription.currency,
-        customer: customerId,
-        days_until_due: subscription.days_until_due ?? undefined,
-        default_payment_method,
-        default_source,
-        default_tax_rates,
-        description: subscription.description ?? undefined,
-        expand: undefined,
-        items,
-        metadata: subscription.metadata,
-        off_session: undefined,
-        on_behalf_of,
-        payment_behavior: undefined,
-        payment_settings,
-        pending_invoice_item_interval,
-        promotion_code,
-        proration_behavior: undefined,
-        transfer_data,
-        trial_end,
-        trial_from_plan: undefined,
-        trial_period_days: undefined,
-        trial_settings: subscription.trial_settings ?? undefined,
-      });
+      const newSubscription = await withRetry(
+        () =>
+          newStripe.subscriptions.create({
+            add_invoice_items: undefined,
+            application_fee_percent,
+            automatic_tax,
+            backdate_start_date: undefined,
+            billing_cycle_anchor: undefined,
+            billing_thresholds,
+            cancel_at_period_end: subscription.cancel_at_period_end,
+            cancel_at,
+            collection_method: subscription.collection_method,
+            coupon: subscription.discount?.coupon?.id ?? undefined,
+            currency: subscription.currency,
+            customer: customerId,
+            days_until_due: subscription.days_until_due ?? undefined,
+            default_payment_method,
+            default_source,
+            default_tax_rates,
+            description: subscription.description ?? undefined,
+            expand: undefined,
+            items,
+            metadata: subscription.metadata,
+            off_session: undefined,
+            on_behalf_of,
+            payment_behavior: undefined,
+            payment_settings,
+            pending_invoice_item_interval,
+            promotion_code,
+            proration_behavior: undefined,
+            transfer_data,
+            trial_end,
+            trial_from_plan: undefined,
+            trial_period_days: undefined,
+            trial_settings: subscription.trial_settings ?? undefined,
+          }),
+        `create subscription for ${customerId}`
+      );
 
       subscriptionMapping[subscription.id] = newSubscription.id;
 
       console.log(
-        `Created new subscription ${newSubscription.id} for ${newSubscription.customer}`
+        chalk.green(
+          `${progress} Created subscription ${newSubscription.id} for ${newSubscription.customer}`
+        )
       );
-    });
+    } catch (error) {
+      failed++;
+      console.log(
+        chalk.red(
+          `${progress} Failed to migrate subscription ${subscription.id}: ${error}`
+        )
+      );
+    }
 
-  await Promise.all(promises);
+    // Rate limit: wait between subscriptions
+    await sleep(DELAY_BETWEEN_SUBSCRIPTIONS_MS);
+  }
+
+  console.log(
+    chalk.green(
+      `\nMigration complete. Success: ${Object.keys(subscriptionMapping).length}, Failed: ${failed}`
+    )
+  );
 
   if (Object.keys(subscriptionMapping).length > 0) {
     console.log(chalk.green("\nSubscription ID mapping (old -> new):"));
