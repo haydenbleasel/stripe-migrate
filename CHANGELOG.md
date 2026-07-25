@@ -1,3 +1,21 @@
+# v1.0.21 (Sat Jul 25 2026)
+
+#### ⚠️ Pushed to `main`
+
+- Revise security policy for supported versions and reporting ([@haydenbleasel](https://github.com/haydenbleasel))
+
+#### 🔩 Dependency Updates
+
+- Bump the npm_and_yarn group across 1 directory with 2 updates [#12](https://github.com/haydenbleasel/stripe-migrate/pull/12) ([@dependabot[bot]](https://github.com/dependabot[bot]))
+- Bump the npm_and_yarn group across 1 directory with 2 updates [#11](https://github.com/haydenbleasel/stripe-migrate/pull/11) ([@dependabot[bot]](https://github.com/dependabot[bot]))
+
+#### Authors: 2
+
+- [@dependabot[bot]](https://github.com/dependabot[bot])
+- Hayden Bleasel ([@haydenbleasel](https://github.com/haydenbleasel))
+
+---
+
 # v1.0.20 (Tue Jan 06 2026)
 
 #### ⚠️ Pushed to `main`
