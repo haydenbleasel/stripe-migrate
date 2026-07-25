@@ -4,6 +4,9 @@ export default defineConfig({
   test: {
     globals: true,
     environment: "node",
+    env: {
+      STRIPE_MIGRATE_DELAY_MS: "0",
+    },
     include: ["__tests__/**/*.test.ts"],
     coverage: {
       provider: "v8",

@@ -18,10 +18,12 @@ export const createStripeInstances = (
 
   const oldStripe = new Stripe(from, {
     apiVersion: "2022-11-15",
+    maxNetworkRetries: 3,
     telemetry: false,
   });
   const newStripe = new Stripe(to, {
     apiVersion: "2022-11-15",
+    maxNetworkRetries: 3,
     telemetry: false,
   });
 
@@ -41,6 +43,7 @@ export const createSingleStripeInstance = (key?: string): Stripe => {
 
   return new Stripe(key, {
     apiVersion: "2022-11-15",
+    maxNetworkRetries: 3,
     telemetry: false,
   });
 };
