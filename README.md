@@ -2,10 +2,24 @@
 
 A Node-based CLI tool to migrate content from between Stripe accounts. Implements some of the checklist for [recreating settings in a new Stripe account](https://support.stripe.com/questions/checklist-for-recreating-settings-in-a-new-stripe-account).
 
+> [!NOTE]
+> This project is no longer published to npm and the repository is archived. To use it, clone the repository and run it directly as described below.
+
 ## Installation
 
+Clone the repository, install the dependencies and build the CLI:
+
 ```bash
-npm install -g stripe-migrate
+git clone https://github.com/haydenbleasel/stripe-migrate.git
+cd stripe-migrate
+pnpm install
+pnpm build
+```
+
+Then run the CLI directly with Node:
+
+```bash
+node dist/index.js <command> [options]
 ```
 
 ## Usage
@@ -15,23 +29,23 @@ Before using this CLI, ensure you use the Stripe CLI to copy PAN data across Str
 Next up, run this CLI to migrate the rest of your data. It will migrate your Products, Plans, Coupons, Subscriptions and Webhooks with maximum consistency.
 
 ```bash
-stripe-migrate webhooks --from sk_test_123 --to sk_test_456
-stripe-migrate products --from sk_test_123 --to sk_test_456
-stripe-migrate plans --from sk_test_123 --to sk_test_456
-stripe-migrate coupons --from sk_test_123 --to sk_test_456
-stripe-migrate subscriptions --from sk_test_123 --to sk_test_456
+node dist/index.js webhooks --from sk_test_123 --to sk_test_456
+node dist/index.js products --from sk_test_123 --to sk_test_456
+node dist/index.js plans --from sk_test_123 --to sk_test_456
+node dist/index.js coupons --from sk_test_123 --to sk_test_456
+node dist/index.js subscriptions --from sk_test_123 --to sk_test_456
 ```
 
 You can also do a dry run of subscriptions, which anonymises and mocks 10 subscribed customers from your old account for testing. This is useful if you're running on a Test Mode account as your destination.
 
 ```bash
-stripe-migrate subscriptions --from sk_test_123 --to sk_test_456 --dry-run
+node dist/index.js subscriptions --from sk_test_123 --to sk_test_456 --dry-run
 ```
 
 Additionally, you can pass in a list of customer IDs to migrate subscriptions for. This works with `--dry-run` too.
 
 ```bash
-stripe-migrate subscriptions --from sk_test_123 --to sk_test_456 --customers cus_123,cus_456
+node dist/index.js subscriptions --from sk_test_123 --to sk_test_456 --customers cus_123,cus_456
 ```
 
 ### Subscription ID Mapping
@@ -49,7 +63,7 @@ Subscription ID mapping (old -> new):
 You can capture this to a file for updating your database references:
 
 ```bash
-stripe-migrate subscriptions --from sk_test_123 --to sk_test_456 2>&1 | tee migration.log
+node dist/index.js subscriptions --from sk_test_123 --to sk_test_456 2>&1 | tee migration.log
 ```
 
 Once your account has been migrated, simply update your API keys and redeploy your app.
@@ -59,7 +73,7 @@ Once your account has been migrated, simply update your API keys and redeploy yo
 To cancel all subscriptions in your old account after migration:
 
 ```bash
-stripe-migrate cancel-subscriptions --key sk_test_123
+node dist/index.js cancel-subscriptions --key sk_test_123
 ```
 
 Webhook, Product, Plan and Coupon migrations check for existing matching data and skips it if required. This means you can run it multiple times to ensure everything is migrated.
