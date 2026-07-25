@@ -549,7 +549,7 @@ describe("subscriptions", () => {
       expect(result).toEqual({ sub_old: "sub_new" });
     });
 
-    it("should throw error when no payment method found on customer", async () => {
+    it("should skip subscription when no payment method found on customer", async () => {
       const customer = createMockCustomer({ id: "cus_test" });
       const subscription = createMockSubscription({
         id: "sub_test",
@@ -566,9 +566,19 @@ describe("subscriptions", () => {
         createMockListResponse([])
       );
 
-      await expect(
-        migrateSubscriptions(oldStripe, newStripe, [], [], false)
-      ).rejects.toThrow("Failed to find payment method on customer");
+      const result = await migrateSubscriptions(
+        oldStripe,
+        newStripe,
+        [],
+        [],
+        false
+      );
+
+      expect(result).toEqual({});
+      expect(newStripe.subscriptions.create).not.toHaveBeenCalled();
+      expect(consoleSpy.log).toHaveBeenCalledWith(
+        expect.stringContaining("no payment method found for customer cus_test")
+      );
     });
 
     describe("dry-run mode", () => {
